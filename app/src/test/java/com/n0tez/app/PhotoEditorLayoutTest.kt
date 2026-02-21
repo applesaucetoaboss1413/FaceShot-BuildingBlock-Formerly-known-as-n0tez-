@@ -6,7 +6,7 @@ import java.io.File
 
 class PhotoEditorLayoutTest {
     @Test
-    fun toolButtons_useTextStartIcons() {
+    fun toolButtons_useTopIcons() {
         val candidates = listOf(
             File("app/src/main/res/layout/activity_photo_editor.xml"),
             File("src/main/res/layout/activity_photo_editor.xml"),
@@ -25,12 +25,12 @@ class PhotoEditorLayoutTest {
             "btnUndo",
         )
         for (id in ids) {
-            val hasTextStartIconGravity = Regex(
+            val hasTopIconGravity = Regex(
                 pattern =
-                    "android:id=\\\"@\\+id/$id\\\"[\\s\\S]*?app:iconGravity=\\\"textStart\\\"",
+                    "android:id=\\\"@\\+id/$id\\\"[\\s\\S]*?app:iconGravity=\\\"top\\\"",
             ).containsMatchIn(xml)
 
-            assertTrue("Expected app:iconGravity=\\\"textStart\\\" for $id", hasTextStartIconGravity)
+            assertTrue("Expected app:iconGravity=\\\"top\\\" for $id", hasTopIconGravity)
         }
     }
 }

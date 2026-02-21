@@ -41,3 +41,15 @@ Run unit tests to verify icon generation and dimensions:
 ```bash
 ./gradlew test
 ```
+
+## React Native (Expo) Editor Shell
+
+The React Native / Expo Router UI shell lives in `apps/faceshot-expo/` so it stays isolated from the native Android Gradle project.
+
+Run it:
+
+```powershell
+cd apps\faceshot-expo
+npm install
+npm start
+```

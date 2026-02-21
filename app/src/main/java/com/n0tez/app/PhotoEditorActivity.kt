@@ -24,6 +24,7 @@ import com.n0tez.app.photoeditor.Adjustments
 import com.n0tez.app.photoeditor.BitmapProcessor
 import com.n0tez.app.photoeditor.FilterPreset
 import com.n0tez.app.photoeditor.ImageViewBitmapMapper
+import com.n0tez.app.photoeditor.NativePhotoEditor
 import com.n0tez.app.photoeditor.PhotoEditorState
 import com.n0tez.app.photoeditor.StickerOverlay
 import com.n0tez.app.photoeditor.TextOverlay
@@ -157,12 +158,14 @@ class PhotoEditorActivity : AppCompatActivity() {
 
             // Decode bitmap with inSampleSize
             contentResolver.openInputStream(uri)?.use { inputStream ->
+                releaseBitmaps()
                 originalBitmap = BitmapFactory.decodeStream(inputStream, null, options)
                 if (originalBitmap == null) throw IOException("Failed to decode bitmap")
                 
                 editedBitmap = originalBitmap?.copy(Bitmap.Config.ARGB_8888, true)
                 imageUri = uri
                 clearOverlays()
+                rotation = 0f
                 displayImage()
                 Toast.makeText(this, "Image loaded", Toast.LENGTH_SHORT).show()
             }
@@ -205,12 +208,14 @@ class PhotoEditorActivity : AppCompatActivity() {
             options.inJustDecodeBounds = false
             options.inSampleSize = calculateInSampleSize(options, 2048, 2048)
             
+            releaseBitmaps()
             originalBitmap = BitmapFactory.decodeFile(path, options)
             if (originalBitmap == null) throw IOException("Failed to decode bitmap")
             
             editedBitmap = originalBitmap?.copy(Bitmap.Config.ARGB_8888, true)
             imageUri = Uri.fromFile(file)
             clearOverlays()
+            rotation = 0f
             displayImage()
             Toast.makeText(this, "Image loaded", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
@@ -358,6 +363,7 @@ class PhotoEditorActivity : AppCompatActivity() {
                 displayImage()
                 Toast.makeText(this, "Image resized to ${newWidth}x$newHeight", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
+                Log.e(logTag, "Resize failed: ${e.message}", e)
                 Toast.makeText(this, "Failed to resize: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
@@ -452,7 +458,13 @@ class PhotoEditorActivity : AppCompatActivity() {
             delay(80)
             try {
                 val state = PhotoEditorState(adjustments = adjustments, filter = filterPreset)
-                val rendered = BitmapProcessor.renderFinalBitmap(contentResolver, base, state)
+                val rendered = BitmapProcessor.renderFinalBitmap(
+                    contentResolver = contentResolver,
+                    source = base,
+                    state = state,
+                    outputMaxSize = 1280,
+                    seed = 0,
+                )
                 val previous = previewBitmap
                 previewBitmap = rendered
                 binding.imageView.setImageBitmap(rendered)
@@ -460,6 +472,7 @@ class PhotoEditorActivity : AppCompatActivity() {
                     previous.recycle()
                 }
             } catch (e: Exception) {
+                Log.e(logTag, "Preview failed: ${e.message}", e)
                 binding.imageView.setImageBitmap(base)
             }
         }
@@ -530,7 +543,12 @@ class PhotoEditorActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val mask = createSimpleMask(base)
-                val cutout = BitmapProcessor.inpaintWithMask(base, mask)
+                val cutout = if (NativePhotoEditor.isAvailable()) {
+                    NativePhotoEditor.inpaintWithMask(base, mask)
+                } else {
+                    Log.w(logTag, "Native cutout unavailable, using fallback")
+                    BitmapProcessor.inpaintWithMask(base, mask)
+                }
                 updateEditedBitmap(cutout)
             } catch (e: Exception) {
                 Toast.makeText(this@PhotoEditorActivity, "AI cutout failed: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -551,7 +569,12 @@ class PhotoEditorActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val mask = createStrokeMask(base)
-                val removed = BitmapProcessor.inpaintWithMask(base, mask)
+                val removed = if (NativePhotoEditor.isAvailable()) {
+                    NativePhotoEditor.inpaintWithMask(base, mask)
+                } else {
+                    Log.w(logTag, "Native removal unavailable, using fallback")
+                    BitmapProcessor.inpaintWithMask(base, mask)
+                }
                 binding.drawingView.clear()
                 updateEditedBitmap(removed)
             } catch (e: Exception) {
@@ -566,6 +589,15 @@ class PhotoEditorActivity : AppCompatActivity() {
         previewBitmap?.let { if (it != previous && it != bitmap) it.recycle() }
         previewBitmap = null
         binding.imageView.setImageBitmap(bitmap)
+    }
+
+    private fun releaseBitmaps() {
+        previewBitmap?.let { if (it != editedBitmap) it.recycle() }
+        previewBitmap = null
+        editedBitmap?.recycle()
+        originalBitmap?.recycle()
+        editedBitmap = null
+        originalBitmap = null
     }
 
     private fun createStrokeMask(base: Bitmap): Bitmap {
@@ -842,9 +874,7 @@ class PhotoEditorActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         previewJob?.cancel()
-        previewBitmap?.recycle()
-        originalBitmap?.recycle()
-        editedBitmap?.recycle()
+        releaseBitmaps()
     }
 
     override fun onSupportNavigateUp(): Boolean {

@@ -2,24 +2,38 @@ package com.n0tez.app
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.widget.AdapterView
+import android.widget.SeekBar
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import com.arthenica.ffmpegkit.FFmpegKit
-import com.arthenica.ffmpegkit.ReturnCode
 import com.android.video.util.VideoEditorUtil
 import com.n0tez.app.databinding.ActivityVideoEditorBinding
+import com.n0tez.app.videoeditor.CropSpec
+import com.n0tez.app.videoeditor.ExportOptions
+import com.n0tez.app.videoeditor.PreviewOptions
+import com.n0tez.app.videoeditor.VideoClip
+import com.n0tez.app.videoeditor.VideoEditResult
+import com.n0tez.app.videoeditor.VideoEditorEngine
+import com.n0tez.app.videoeditor.VideoTimeline
+import com.n0tez.app.videoeditor.VideoTrack
+import com.n0tez.app.videoeditor.VideoTransition
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
-import java.text.SimpleDateFormat
 import java.util.*
 
 class VideoEditorActivity : AppCompatActivity() {
@@ -27,19 +41,41 @@ class VideoEditorActivity : AppCompatActivity() {
     private lateinit var binding: ActivityVideoEditorBinding
     private var videoUri: Uri? = null
     private var videoPath: String? = null
+    private var previewPath: String? = null
+    private val engine by lazy { VideoEditorEngine(File(cacheDir, "video_preview")) }
+    private val logTag = "VideoEditorActivity"
     private var isPlaying = false
     private var videoDuration = 0
     private var trimStart = 0f
     private var trimEnd = 0f
     private val handler = Handler(Looper.getMainLooper())
+    private var playbackSpeed = 1f
+    private var cropRatio: Float? = null
+    private val cutPoints = mutableListOf<Long>()
+    private var selectedQualityIndex = 0
+    private var previewJob: Job? = null
+    private var mediaPlayer: MediaPlayer? = null
+    private var isSeeking = false
+
+    private val pickVideoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri == null) {
+            Toast.makeText(this, "No video selected", Toast.LENGTH_SHORT).show()
+            return@registerForActivityResult
+        }
+        videoUri = uri
+        videoPath = null
+        loadVideo(uri)
+    }
 
     private val updateProgressRunnable = object : Runnable {
         override fun run() {
             if (isPlaying) {
                 val currentPosition = binding.videoView.currentPosition
                 updateTimeDisplay(currentPosition, videoDuration)
+                if (!isSeeking) {
+                    binding.seekBarProgress.progress = currentPosition
+                }
                 
-                // Loop if reached trim end
                 if (trimEnd > 0 && currentPosition >= trimEnd) {
                     binding.videoView.seekTo(trimStart.toInt())
                 }
@@ -59,16 +95,11 @@ class VideoEditorActivity : AppCompatActivity() {
         videoUri = intent.data
 
         if (videoUri != null) {
-            // Need to get absolute path for FFmpeg
-            // This is complex with Uri, ideally we copy to cache
-            // For now, assuming file Uri or copy logic
-            // simplified:
             loadVideo(videoUri!!)
         } else if (videoPath != null) {
             loadVideo(Uri.fromFile(File(videoPath!!)))
         } else {
-            Toast.makeText(this, "No video loaded", Toast.LENGTH_SHORT).show()
-            finish()
+            binding.tvVideoInfo.text = "Select a video to start"
         }
     }
 
@@ -77,12 +108,60 @@ class VideoEditorActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Video Editor"
 
+        binding.btnSelectVideo.setOnClickListener { pickVideoLauncher.launch("video/*") }
+
         binding.btnPlayPause.setOnClickListener {
             if (isPlaying) pauseVideo() else playVideo()
         }
 
-        binding.btnSave.setOnClickListener { saveVideo() }
+        binding.btnStop.setOnClickListener {
+            try {
+                binding.videoView.stopPlayback()
+            } catch (_: Throwable) {
+            }
+            isPlaying = false
+            handler.removeCallbacks(updateProgressRunnable)
+            binding.btnPlayPause.setIconResource(R.drawable.ic_play)
+        }
+
+        binding.btnSave.setOnClickListener { exportVideo() }
+        binding.btnCancel.setOnClickListener { finish() }
         binding.btnExtractFrame.setOnClickListener { extractFrame() }
+
+        binding.btnSpeedDown.setOnClickListener { adjustSpeed(-0.25f) }
+        binding.btnSpeedUp.setOnClickListener { adjustSpeed(0.25f) }
+        binding.btnSpeedReset.setOnClickListener { resetSpeed() }
+
+        binding.btnCrop.setOnClickListener { showCropDialog() }
+        binding.btnCut.setOnClickListener { addCutPoint() }
+        binding.btnClearCuts.setOnClickListener { clearCutPoints() }
+
+        binding.seekBarProgress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    binding.videoView.seekTo(progress)
+                    updateTimeDisplay(progress, videoDuration)
+                }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                isSeeking = true
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                isSeeking = false
+            }
+        })
+
+        binding.spinnerQuality.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                selectedQualityIndex = position
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                selectedQualityIndex = 0
+            }
+        }
         
         binding.rangeSliderTrim.addOnChangeListener { slider, value, fromUser ->
             val values = slider.values
@@ -91,46 +170,68 @@ class VideoEditorActivity : AppCompatActivity() {
             if (fromUser) {
                 binding.videoView.seekTo(trimStart.toInt())
                 updateTimeDisplay(trimStart.toInt(), videoDuration)
+                updateTrimInfo()
+                applyPreviewDebounced()
             }
         }
         
         binding.videoView.setOnPreparedListener { mp ->
+            mediaPlayer = mp
             videoDuration = mp.duration
             trimEnd = videoDuration.toFloat()
             binding.rangeSliderTrim.valueFrom = 0f
             binding.rangeSliderTrim.valueTo = videoDuration.toFloat()
             binding.rangeSliderTrim.setValues(0f, videoDuration.toFloat())
+            binding.seekBarProgress.max = videoDuration
             updateTimeDisplay(0, videoDuration)
+            updateTrimInfo()
+            applyPlaybackSpeed()
         }
         
         binding.videoView.setOnCompletionListener {
             isPlaying = false
-            binding.btnPlayPause.setIconResource(R.drawable.ic_play) // Assuming ic_play
+            binding.btnPlayPause.setIconResource(R.drawable.ic_play)
+        }
+
+        binding.videoView.setOnErrorListener { _, _, _ ->
+            isPlaying = false
+            handler.removeCallbacks(updateProgressRunnable)
+            binding.btnPlayPause.setIconResource(R.drawable.ic_play)
+            Toast.makeText(this, "Video playback failed", Toast.LENGTH_SHORT).show()
+            true
         }
     }
 
     private fun loadVideo(uri: Uri) {
-        binding.videoView.setVideoURI(uri)
+        try {
+            binding.videoView.setVideoURI(uri)
+            binding.tvVideoInfo.text = "Loading…"
+        } catch (_: Throwable) {
+            Toast.makeText(this, "Failed to load video", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         videoPath?.let { updateNativeVideoInfo(it) }
-        
-        if (videoPath == null) {
-            lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    val inputStream = contentResolver.openInputStream(uri)
-                    val tempFile = File(cacheDir, "temp_video.mp4")
-                    val outputStream = java.io.FileOutputStream(tempFile)
-                    inputStream?.copyTo(outputStream)
-                    
-                    inputStream?.close()
-                    outputStream.close()
-                    
-                    videoPath = tempFile.absolutePath
-                    updateNativeVideoInfo(tempFile.absolutePath)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@VideoEditorActivity, "Failed to load video file", Toast.LENGTH_SHORT).show()
+
+        if (videoPath != null) return
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val tempFile = File(cacheDir, "video_${System.currentTimeMillis()}.mp4")
+                contentResolver.openInputStream(uri)?.use { input ->
+                    FileOutputStream(tempFile).use { output ->
+                        input.copyTo(output)
                     }
+                } ?: throw IllegalStateException("Could not open selected video")
+
+                videoPath = tempFile.absolutePath
+                withContext(Dispatchers.Main) {
+                    updateNativeVideoInfo(tempFile.absolutePath)
+                }
+            } catch (_: Throwable) {
+                withContext(Dispatchers.Main) {
+                    binding.tvVideoInfo.text = "Failed to load video file"
+                    Toast.makeText(this@VideoEditorActivity, "Failed to load video file", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -158,7 +259,7 @@ class VideoEditorActivity : AppCompatActivity() {
     private fun playVideo() {
         binding.videoView.start()
         isPlaying = true
-        binding.btnPlayPause.setIconResource(R.drawable.ic_pause) // Assuming ic_pause
+        binding.btnPlayPause.setIconResource(R.drawable.ic_pause)
         handler.post(updateProgressRunnable)
     }
 
@@ -174,6 +275,13 @@ class VideoEditorActivity : AppCompatActivity() {
         binding.tvTotalTime.text = formatTime(total)
     }
 
+    private fun updateTrimInfo() {
+        val start = trimStart.toInt()
+        val end = trimEnd.toInt()
+        val duration = (end - start).coerceAtLeast(0)
+        binding.tvTrimInfo.text = "Trim: ${formatTime(start)} - ${formatTime(end)} (Duration: ${formatTime(duration)})"
+    }
+
     private fun formatTime(millis: Int): String {
         val seconds = millis / 1000
         val minutes = seconds / 60
@@ -181,34 +289,82 @@ class VideoEditorActivity : AppCompatActivity() {
         return String.format("%02d:%02d", minutes, remainingSeconds)
     }
 
-    private fun trimVideo() {
-        if (videoPath == null) return
-        
-        val startSec = trimStart / 1000f
-        val durationSec = (trimEnd - trimStart) / 1000f
-        
-        val outputFile = File(filesDir, "media/video/trimmed_${System.currentTimeMillis()}.mp4")
-        outputFile.parentFile?.mkdirs()
-        
-        val cmd = "-ss $startSec -i \"$videoPath\" -t $durationSec -c copy \"${outputFile.absolutePath}\""
-        
-        FFmpegKit.executeAsync(cmd) { session ->
-            if (ReturnCode.isSuccess(session.returnCode)) {
-                runOnUiThread {
-                    Toast.makeText(this, "Video trimmed successfully", Toast.LENGTH_SHORT).show()
-                    // Maybe open the trimmed video?
-                }
-            } else {
-                runOnUiThread {
-                    Toast.makeText(this, "Trim failed", Toast.LENGTH_SHORT).show()
-                }
+    private fun adjustSpeed(delta: Float) {
+        playbackSpeed = (playbackSpeed + delta).coerceIn(0.25f, 4f)
+        binding.tvSpeed.text = String.format(Locale.US, "%.2fx", playbackSpeed)
+        applyPlaybackSpeed()
+        applyPreviewDebounced()
+    }
+
+    private fun resetSpeed() {
+        playbackSpeed = 1f
+        binding.tvSpeed.text = "1.0x"
+        applyPlaybackSpeed()
+        applyPreviewDebounced()
+    }
+
+    private fun applyPlaybackSpeed() {
+        val mp = mediaPlayer ?: return
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            try {
+                val params = mp.playbackParams ?: mp.playbackParams
+                params.speed = playbackSpeed
+                mp.playbackParams = params
+            } catch (e: Exception) {
+                Log.w(logTag, "Failed to set playback speed: ${e.message}")
             }
         }
     }
-    
-    private fun saveVideo() {
-        // Just trimming for now as "Save"
-        trimVideo()
+
+    private fun showCropDialog() {
+        val options = arrayOf("None", "1:1", "4:5", "16:9", "9:16")
+        AlertDialog.Builder(this)
+            .setTitle("Crop Ratio")
+            .setItems(options) { _, which ->
+                cropRatio = when (which) {
+                    1 -> 1f
+                    2 -> 4f / 5f
+                    3 -> 16f / 9f
+                    4 -> 9f / 16f
+                    else -> null
+                }
+                val label = options.getOrNull(which) ?: "None"
+                binding.tvCropRatio.text = "Crop: $label"
+                applyPreviewDebounced()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun addCutPoint() {
+        val position = binding.videoView.currentPosition.toLong()
+        if (position <= 0) {
+            Toast.makeText(this, "Seek to a position to cut", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (cutPoints.contains(position)) {
+            Toast.makeText(this, "Cut point already added", Toast.LENGTH_SHORT).show()
+            return
+        }
+        cutPoints.add(position)
+        cutPoints.sort()
+        updateCutPointsLabel()
+        applyPreviewDebounced()
+    }
+
+    private fun clearCutPoints() {
+        cutPoints.clear()
+        updateCutPointsLabel()
+        applyPreviewDebounced()
+    }
+
+    private fun updateCutPointsLabel() {
+        if (cutPoints.isEmpty()) {
+            binding.tvCutPoints.text = "No cut points"
+            return
+        }
+        val formatted = cutPoints.joinToString(", ") { formatTime(it.toInt()) }
+        binding.tvCutPoints.text = "Cuts: $formatted"
     }
 
     private fun extractFrame() {
@@ -253,6 +409,119 @@ class VideoEditorActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun applyPreviewDebounced() {
+        val path = videoPath ?: return
+        previewJob?.cancel()
+        previewJob = lifecycleScope.launch {
+            delay(120)
+            val output = File(cacheDir, "video_preview/preview_${System.currentTimeMillis()}.mp4")
+            val previewOptions = PreviewOptions(
+                width = 640,
+                height = 360,
+                fps = 24,
+                maxDurationMs = 6_000,
+                file = output,
+            )
+            val timeline = buildTimeline(path)
+            when (val result = engine.renderPreview(timeline, previewOptions)) {
+                is VideoEditResult.Success -> {
+                    previewPath = result.file.absolutePath
+                    binding.videoView.setVideoURI(Uri.fromFile(result.file))
+                    binding.videoView.seekTo(0)
+                }
+                is VideoEditResult.Failure -> {
+                    Log.w(logTag, "Preview failed: ${result.message} ${result.details.orEmpty()}")
+                }
+            }
+        }
+    }
+
+    private fun buildTimeline(path: String): VideoTimeline {
+        val baseClip = VideoClip(
+            sourcePath = path,
+            startMs = trimStart.toLong(),
+            endMs = trimEnd.toLong().takeIf { it > 0 },
+            speed = playbackSpeed,
+            crop = cropRatio?.let { CropSpec(it) },
+        )
+        val clips = if (cutPoints.isEmpty()) {
+            mutableListOf(baseClip)
+        } else {
+            val points = listOf(trimStart.toLong()) + cutPoints + listOf(trimEnd.toLong())
+            val segments = mutableListOf<VideoClip>()
+            points.windowed(2).forEach { (start, end) ->
+                if (end > start) {
+                    segments.add(
+                        baseClip.copy(
+                            id = UUID.randomUUID().toString(),
+                            startMs = start,
+                            endMs = end,
+                        ),
+                    )
+                }
+            }
+            segments
+        }
+        val transitions = if (clips.size > 1) MutableList(clips.size - 1) { VideoTransition() } else mutableListOf()
+        val track = VideoTrack(clips = clips, transitions = transitions)
+        return VideoTimeline(videoTracks = mutableListOf(track))
+    }
+
+    private fun exportVideo() {
+        val path = videoPath
+        if (path == null) {
+            Toast.makeText(this, "No video loaded", Toast.LENGTH_SHORT).show()
+            return
+        }
+        lifecycleScope.launch {
+            val outputDir = File(filesDir, "media/video")
+            outputDir.mkdirs()
+            val outputFile = File(outputDir, "export_${System.currentTimeMillis()}.mp4")
+            val (width, height, bitrate) = when (selectedQualityIndex) {
+                1 -> Triple(1920, 1080, 6_000_000)
+                2 -> Triple(1280, 720, 3_500_000)
+                3 -> Triple(854, 480, 2_000_000)
+                else -> Triple(null, null, null)
+            }
+            val options = ExportOptions(
+                width = width,
+                height = height,
+                fps = 30,
+                videoBitrate = bitrate,
+                file = outputFile,
+            )
+            val timeline = buildTimeline(path)
+            binding.btnSave.isEnabled = false
+            binding.btnSave.text = "Exporting…"
+            when (val result = withContext(Dispatchers.IO) { engine.export(timeline, options) }) {
+                is VideoEditResult.Success -> {
+                    Toast.makeText(this@VideoEditorActivity, "Exported: ${result.file.name}", Toast.LENGTH_SHORT).show()
+                    shareVideo(result.file)
+                }
+                is VideoEditResult.Failure -> {
+                    Toast.makeText(this@VideoEditorActivity, "Export failed: ${result.message}", Toast.LENGTH_SHORT).show()
+                    Log.e(logTag, "Export failure: ${result.details.orEmpty()}")
+                }
+            }
+            binding.btnSave.isEnabled = true
+            binding.btnSave.text = "Export"
+        }
+    }
+
+    private fun shareVideo(file: File) {
+        try {
+            val uri = FileProvider.getUriForFile(this, "$packageName.provider", file)
+            val share = Intent(Intent.ACTION_SEND).apply {
+                type = "video/mp4"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(share, "Share video"))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Share failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
@@ -261,5 +530,7 @@ class VideoEditorActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacks(updateProgressRunnable)
+        previewJob?.cancel()
+        mediaPlayer = null
     }
 }
