@@ -1,4 +1,4 @@
-# N0tez
+# FaceShot BuildingBlock
 
 ## Icon Integration System
 
@@ -34,22 +34,55 @@ This script will:
   - Adaptive icon support (API 26+).
   - Legacy icon support for older Android versions.
 
-### Testing
+## Canonical App Layout
 
-Run unit tests to verify icon generation and dimensions:
+- Native Android app: `app/`
+- Canonical Expo shell: `apps/faceshot-expo/`
+- Deprecated duplicate Expo surface: `rn/` has been removed from the working tree and should not be restored
 
-```bash
-./gradlew test
+## Android Setup
+
+For local Android builds, create a machine-local `local.properties` at the repository root that points to your installed Android SDK. Keep this file uncommitted.
+
+Examples:
+
+```properties
+# Windows
+sdk.dir=C:\\Users\\<you>\\AppData\\Local\\Android\\Sdk
+
+# macOS
+sdk.dir=/Users/<you>/Library/Android/sdk
+
+# Linux
+sdk.dir=/home/<you>/Android/Sdk
 ```
 
-## React Native (Expo) Editor Shell
+For CI, set `ANDROID_SDK_ROOT` in the runner environment and generate `local.properties` during setup so the build does not depend on any developer-specific path.
 
-The React Native / Expo Router UI shell lives in `apps/faceshot-expo/` so it stays isolated from the native Android Gradle project.
-
-Run it:
+Android green-path verification from the repository root:
 
 ```powershell
-cd apps\faceshot-expo
-npm install
-npm start
+.\gradlew.bat :app:compileDebugKotlin --no-daemon
+```
+
+## Expo Shell
+
+The canonical Expo Router shell lives in `apps/faceshot-expo/`.
+
+Install dependencies:
+
+```powershell
+npm --prefix .\apps\faceshot-expo ci
+```
+
+Expo green-path verification:
+
+```powershell
+npm --prefix .\apps\faceshot-expo run verify
+```
+
+Start the Expo shell:
+
+```powershell
+npm --prefix .\apps\faceshot-expo start
 ```

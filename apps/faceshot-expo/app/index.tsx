@@ -43,7 +43,7 @@ export default function HomeScreen(): React.ReactElement {
     <SafeAreaView className="flex-1 bg-fs-bg">
       <LinearGradient colors={['#000000', '#0B0C10']} style={{ flex: 1 }}>
         <View className="flex-1 px-6 pt-10">
-          <Text className="text-fs-text text-2xl font-bold">faceshot-chopshop</Text>
+          <Text className="text-fs-text text-2xl font-bold">FaceShot BuildingBlock</Text>
           <Text className="text-fs-text2 mt-2 text-sm">Launch the editor shell with your own media.</Text>
 
           <View className="mt-8" style={{ gap: 12 }}>

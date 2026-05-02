@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "faceshot-chopshop",
-    "slug": "faceshot-chopshop",
+    "name": "FaceShot BuildingBlock",
+    "slug": "faceshot-buildingblock",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "faceshotchopshop",
+    "scheme": "faceshotbuildingblock",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -23,7 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.faceshotchopshop"
+      "package": "com.faceshot.buildingblock"
     },
     "web": {
       "bundler": "metro",
