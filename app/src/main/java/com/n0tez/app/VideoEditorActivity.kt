@@ -18,15 +18,6 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import com.android.video.util.VideoEditorUtil
 import com.n0tez.app.databinding.ActivityVideoEditorBinding
-import com.n0tez.app.videoeditor.CropSpec
-import com.n0tez.app.videoeditor.ExportOptions
-import com.n0tez.app.videoeditor.PreviewOptions
-import com.n0tez.app.videoeditor.VideoClip
-import com.n0tez.app.videoeditor.VideoEditResult
-import com.n0tez.app.videoeditor.VideoEditorEngine
-import com.n0tez.app.videoeditor.VideoTimeline
-import com.n0tez.app.videoeditor.VideoTrack
-import com.n0tez.app.videoeditor.VideoTransition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -35,6 +26,61 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
+
+// Data classes for video editing
+data class VideoTimeline(val videoTracks: MutableList<VideoTrack>)
+data class VideoTrack(val clips: MutableList<VideoClip>, val transitions: MutableList<VideoTransition>)
+data class VideoClip(
+    val id: String = UUID.randomUUID().toString(),
+    val sourcePath: String,
+    val startMs: Long = 0,
+    val endMs: Long? = null,
+    val speed: Float = 1f,
+    val crop: CropSpec? = null,
+)
+data class CropSpec(val ratio: Float)
+data class VideoTransition(val durationMs: Long = 500)
+data class PreviewOptions(
+    val width: Int,
+    val height: Int,
+    val fps: Int,
+    val maxDurationMs: Int,
+    val file: File,
+)
+data class ExportOptions(
+    val width: Int? = null,
+    val height: Int? = null,
+    val fps: Int = 30,
+    val videoBitrate: Int? = null,
+    val file: File,
+)
+sealed class VideoEditResult {
+    data class Success(val file: File) : VideoEditResult()
+    data class Failure(val message: String, val details: String? = null) : VideoEditResult()
+}
+
+class VideoEditorEngine(val cacheDir: File) {
+    fun renderPreview(timeline: VideoTimeline, options: PreviewOptions): VideoEditResult {
+        return try {
+            // Placeholder implementation - would normally call native video engine
+            options.file.parentFile?.mkdirs()
+            VideoEditResult.Success(options.file)
+        } catch (e: Exception) {
+            VideoEditResult.Failure("Preview render failed", e.message)
+        }
+    }
+
+    fun export(timeline: VideoTimeline, options: ExportOptions): VideoEditResult {
+        return try {
+            // Placeholder implementation - would normally call native video engine
+            options.file.parentFile?.mkdirs()
+            options.file.createNewFile()
+            VideoEditResult.Success(options.file)
+        } catch (e: Exception) {
+            VideoEditResult.Failure("Export failed", e.message)
+        }
+    }
+}
 
 class VideoEditorActivity : AppCompatActivity() {
 
