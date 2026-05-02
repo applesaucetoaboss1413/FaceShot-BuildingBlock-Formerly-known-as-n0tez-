@@ -2,7 +2,6 @@ package com.n0tez.app.photoeditor
 
 import android.graphics.Bitmap
 import android.util.Log
-import com.camerasideas.collagemaker.photoproc.removal.ObjectRemoval
 
 object NativePhotoEditor {
     private const val logTag = "NativePhotoEditor"
@@ -12,12 +11,14 @@ object NativePhotoEditor {
 
     fun inpaintWithMask(base: Bitmap, mask: Bitmap): Bitmap {
         val output = Bitmap.createBitmap(base.width, base.height, Bitmap.Config.ARGB_8888)
-        val result = ObjectRemoval.runObjectRemoval(base, mask, output)
+        val result = nativeInpaintWithMask(base, mask, output)
         if (result < 0) {
             throw IllegalStateException("Native inpaint failed: $result")
         }
         return output
     }
+
+    private external fun nativeInpaintWithMask(base: Bitmap, mask: Bitmap, output: Bitmap): Int
 
     private fun loadLibraries(): Boolean {
         val libs = listOf(
