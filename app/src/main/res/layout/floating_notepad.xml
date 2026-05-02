@@ -165,6 +165,15 @@
                 android:src="@drawable/ic_share"
                 app:tint="#ff00ffff"
                 android:contentDescription="Share note"/>
+            <ImageButton
+                android:id="@+id/btn_capture_text"
+                android:background="@android:color/transparent"
+                android:padding="8dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_text"
+                app:tint="#ff00ffff"
+                android:contentDescription="@string/accessibility_capture_text_description"/>
             <View
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
