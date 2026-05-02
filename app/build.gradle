@@ -16,8 +16,8 @@
 //   [FIX-3] ffmpeg-kit dependency comment added to flag the non-standard
 //           fork. Package name com.arthenica.ffmpegkit must be preserved
 //           by the fork — verify before upgrading.
-//   [FIX-4] compileSdk bumped to 35 to match current stable AGP
-//           recommendations (targetSdk stays 34 for now).
+//   [FIX-4] compileSdk remains on 34 so it matches the installed
+//           platform and AGP 8.2 support envelope (targetSdk stays 34).
 //   [FIX-5] Kotlin version pinned explicitly via ext block so all
 //           kapt processors use the same Kotlin runtime.
 // ============================================================
@@ -34,8 +34,8 @@ def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().conta
 
 android {
     namespace 'com.n0tez.app'
-    // [FIX-4] compileSdk 34 → 35
-    compileSdk 35
+    // [FIX-4] Keep compileSdk aligned with the supported/tested platform.
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.n0tez.app"
@@ -100,6 +100,18 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+    testOptions {
+        unitTests.all {
+            def robolectricUserHome = new File(buildDir, "robolectric-user-home")
+            systemProperty "user.home", robolectricUserHome.absolutePath
+            doFirst {
+                if (!robolectricUserHome.exists()) {
+                    robolectricUserHome.mkdirs()
+                }
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------
@@ -121,7 +133,9 @@ tasks.register("generateIconMetadata") {
         def primaryInfo = [:]
         def overlayInfo = [:]
 
-        [primaryFile: primaryInfo, overlayFile: overlayInfo].each { srcFile, info ->
+        [[file: primaryFile, info: primaryInfo], [file: overlayFile, info: overlayInfo]].each { entry ->
+            def srcFile = entry.file
+            def info = entry.info
             try {
                 if (srcFile.exists()) {
                     def img = javax.imageio.ImageIO.read(srcFile)

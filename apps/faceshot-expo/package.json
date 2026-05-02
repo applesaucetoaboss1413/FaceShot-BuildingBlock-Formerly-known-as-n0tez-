@@ -1,14 +1,15 @@
 {
-  "name": "rn",
+  "name": "faceshot-buildingblock-expo",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "verify": "npm run typecheck"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
