@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -20,6 +21,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val OVERLAY_PERMISSION_REQUEST_CODE = 100
     private val STORAGE_PERMISSION_REQUEST_CODE = 101
+    private val ACCESSIBILITY_PERMISSION_REQUEST_CODE = 102
+    private var shouldStartFloatingWidgetAfterSetup = false
+    private var permissionDialogVisible = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,10 +39,11 @@ class MainActivity : AppCompatActivity() {
             // Card taps
             
             cardFloatingWidget.setOnClickListener {
-                if (hasOverlayPermission()) {
+                if (hasRequiredWidgetPermissions()) {
                     startFloatingWidget()
                 } else {
-                    requestOverlayPermission()
+                    shouldStartFloatingWidgetAfterSetup = true
+                    maybePromptRequiredSetup()
                 }
             }
 
@@ -68,6 +73,8 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
+
+        maybePromptRequiredSetup()
     }
     
     private fun hasOverlayPermission(): Boolean {
@@ -75,6 +82,29 @@ class MainActivity : AppCompatActivity() {
             Settings.canDrawOverlays(this)
         } else {
             true
+        }
+    }
+
+    private fun hasAccessibilityPermission(): Boolean {
+        return TextCaptureAccessibilityService.isEnabled(this)
+    }
+
+    private fun hasRequiredWidgetPermissions(): Boolean {
+        return hasOverlayPermission() && hasAccessibilityPermission()
+    }
+
+    private fun maybePromptRequiredSetup() {
+        if (permissionDialogVisible) {
+            return
+        }
+
+        when {
+            !hasOverlayPermission() -> showOverlayPermissionDialog()
+            !hasAccessibilityPermission() -> showAccessibilityPermissionDialog()
+            shouldStartFloatingWidgetAfterSetup -> {
+                shouldStartFloatingWidgetAfterSetup = false
+                startFloatingWidget()
+            }
         }
     }
     
@@ -86,6 +116,53 @@ class MainActivity : AppCompatActivity() {
             )
             startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE)
         }
+    }
+
+    private fun requestAccessibilityPermission() {
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+        startActivityForResult(intent, ACCESSIBILITY_PERMISSION_REQUEST_CODE)
+    }
+
+    private fun showOverlayPermissionDialog() {
+        permissionDialogVisible = true
+        AlertDialog.Builder(this)
+            .setTitle(R.string.overlay_permission_dialog_title)
+            .setMessage(R.string.overlay_permission_dialog_message)
+            .setCancelable(false)
+            .setPositiveButton(R.string.permission_open_settings) { _, _ ->
+                permissionDialogVisible = false
+                requestOverlayPermission()
+            }
+            .setNegativeButton(R.string.permission_not_now) { _, _ ->
+                permissionDialogVisible = false
+                shouldStartFloatingWidgetAfterSetup = false
+            }
+            .setOnCancelListener {
+                permissionDialogVisible = false
+                shouldStartFloatingWidgetAfterSetup = false
+            }
+            .show()
+    }
+
+    private fun showAccessibilityPermissionDialog() {
+        permissionDialogVisible = true
+        AlertDialog.Builder(this)
+            .setTitle(R.string.accessibility_permission_dialog_title)
+            .setMessage(R.string.accessibility_permission_dialog_message)
+            .setCancelable(false)
+            .setPositiveButton(R.string.permission_open_settings) { _, _ ->
+                permissionDialogVisible = false
+                requestAccessibilityPermission()
+            }
+            .setNegativeButton(R.string.permission_not_now) { _, _ ->
+                permissionDialogVisible = false
+                shouldStartFloatingWidgetAfterSetup = false
+            }
+            .setOnCancelListener {
+                permissionDialogVisible = false
+                shouldStartFloatingWidgetAfterSetup = false
+            }
+            .show()
     }
     
     private fun startFloatingWidget() {
@@ -108,9 +185,22 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             OVERLAY_PERMISSION_REQUEST_CODE -> {
                 if (hasOverlayPermission()) {
-                    startFloatingWidget()
+                    maybePromptRequiredSetup()
                 } else {
                     Toast.makeText(this, "Overlay permission denied", Toast.LENGTH_SHORT).show()
+                    shouldStartFloatingWidgetAfterSetup = false
+                }
+            }
+            ACCESSIBILITY_PERMISSION_REQUEST_CODE -> {
+                if (hasAccessibilityPermission()) {
+                    maybePromptRequiredSetup()
+                } else {
+                    Toast.makeText(
+                        this,
+                        R.string.accessibility_permission_denied,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    shouldStartFloatingWidgetAfterSetup = false
                 }
             }
         }
