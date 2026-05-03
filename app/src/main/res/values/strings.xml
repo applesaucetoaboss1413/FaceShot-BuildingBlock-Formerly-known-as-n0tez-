@@ -28,6 +28,14 @@
     <string name="abc_shareactionprovider_share_with_application">Share with %s</string>
     <string name="abc_toolbar_collapse_description">Collapse</string>
     <string name="about">About</string>
+    <string name="accessibility_capture_text">Capture Text</string>
+    <string name="accessibility_capture_text_description">Capture text beneath the transparent note</string>
+    <string name="accessibility_capture_no_text">No visible text found underneath the notepad</string>
+    <string name="accessibility_capture_success">Captured text inserted into note</string>
+    <string name="accessibility_enable_instructions">Enable FaceShot-BuildingBlock text capture in Settings, then return to the notepad.</string>
+    <string name="accessibility_permission_required">Accessibility access is required before text capture can read text beneath the overlay.</string>
+    <string name="accessibility_service_description">Lets FaceShot-BuildingBlock capture visible text behind the floating notepad and paste it into your note.</string>
+    <string name="accessibility_service_label">FaceShot-BuildingBlock Text Capture</string>
     <string name="androidx_startup">androidx.startup</string>
     <string name="app_name">FaceShot-BuildingBlock</string>
     <string name="appbar_scrolling_view_behavior">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>

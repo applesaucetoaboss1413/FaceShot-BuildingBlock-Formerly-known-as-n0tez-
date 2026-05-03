@@ -12,6 +12,7 @@ import android.content.pm.ServiceInfo
 import android.graphics.Color
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Rect
 import android.graphics.PixelFormat
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
@@ -435,6 +436,10 @@ class FloatingWidgetService : Service() {
                 shareCurrentNote()
             }
 
+            btnCaptureText.setOnClickListener {
+                captureVisibleTextIntoNote(notepadEditText)
+            }
+
             btnDeleteNote.setOnClickListener {
                 currentNote?.let { note ->
                     serviceScope.launch(Dispatchers.IO) {
@@ -651,6 +656,79 @@ class FloatingWidgetService : Service() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(chooserIntent)
+    }
+
+    private fun captureVisibleTextIntoNote(editText: EditText) {
+        if (!TextCaptureAccessibilityService.isEnabled(this)) {
+            openAccessibilitySettings()
+            Toast.makeText(
+                this,
+                getString(R.string.accessibility_permission_required),
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+
+        val captureBounds = buildCaptureBounds() ?: run {
+            logInternal("capture_bounds_missing")
+            Toast.makeText(this, R.string.accessibility_capture_no_text, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val capturedText = TextCaptureAccessibilityService.captureTextInRegion(
+            targetBounds = captureBounds,
+            excludedPackageName = packageName,
+        )
+
+        if (capturedText.isBlank()) {
+            logInternal(
+                "capture_empty:${TextCaptureAccessibilityService.latestObservedPackageName().orEmpty()}",
+            )
+            Toast.makeText(this, R.string.accessibility_capture_no_text, Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        insertCapturedText(editText, capturedText)
+        saveCurrentNote()
+        logInternal("capture_success:${capturedText.length}")
+        Toast.makeText(this, R.string.accessibility_capture_success, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun buildCaptureBounds(): Rect? {
+        val bounds = Rect()
+        val captureSurface = floatingNotepadView?.findViewById<View>(R.id.edit_text_background)
+            ?: return null
+        return if (captureSurface.getGlobalVisibleRect(bounds) && !bounds.isEmpty) {
+            bounds
+        } else {
+            null
+        }
+    }
+
+    private fun insertCapturedText(editText: EditText, capturedText: String) {
+        val currentContent = editText.text ?: return
+        val selectionStart = editText.selectionStart.coerceAtLeast(0)
+        val selectionEnd = editText.selectionEnd.coerceAtLeast(0)
+        val safeStart = minOf(selectionStart, selectionEnd)
+        val safeEnd = maxOf(selectionStart, selectionEnd)
+        val needsLeadingBreak = safeStart > 0 && currentContent.getOrNull(safeStart - 1) != '\n'
+        val needsTrailingBreak = safeEnd < currentContent.length && currentContent.getOrNull(safeEnd) != '\n'
+        val insertion = buildString {
+            if (needsLeadingBreak) append('\n')
+            append(capturedText)
+            if (needsTrailingBreak) append('\n')
+        }
+        currentContent.replace(safeStart, safeEnd, insertion)
+        val newSelection = (safeStart + insertion.length).coerceAtMost(currentContent.length)
+        editText.setSelection(newSelection)
+    }
+
+    private fun openAccessibilitySettings() {
+        Toast.makeText(this, R.string.accessibility_enable_instructions, Toast.LENGTH_LONG).show()
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
     }
 
     private fun closeNotepadInternal() {
