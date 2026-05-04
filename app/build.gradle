@@ -16,8 +16,8 @@
 //   [FIX-3] ffmpeg-kit dependency comment added to flag the non-standard
 //           fork. Package name com.arthenica.ffmpegkit must be preserved
 //           by the fork — verify before upgrading.
-//   [FIX-4] compileSdk remains on 34 so it matches the installed
-//           platform and AGP 8.2 support envelope (targetSdk stays 34).
+//   [FIX-4] compileSdk / targetSdk now align with Android 15
+//           (API 35) for current Google Play submission policy.
 //   [FIX-5] Kotlin version pinned explicitly via ext block so all
 //           kapt processors use the same Kotlin runtime.
 // ============================================================
@@ -34,14 +34,14 @@ def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().conta
 
 android {
     namespace 'com.n0tez.app'
-    // [FIX-4] Keep compileSdk aligned with the supported/tested platform.
-    compileSdk 34
+    // [FIX-4] Align with current Google Play target API requirement.
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.n0tez.app"
         // [FIX-1] minSdk 33 → 26  (covers ~98 % of active Android devices)
         minSdk 26
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0"
 
@@ -195,9 +195,6 @@ dependencies {
     // Firebase
     implementation platform('com.google.firebase:firebase-bom:32.7.0')
     implementation 'com.google.firebase:firebase-crashlytics-ktx'
-    implementation 'com.google.firebase:firebase-analytics-ktx'
-    implementation 'com.google.firebase:firebase-firestore-ktx'
-    implementation 'com.google.firebase:firebase-auth-ktx'
 
     // Room
     implementation 'androidx.room:room-runtime:2.6.1'

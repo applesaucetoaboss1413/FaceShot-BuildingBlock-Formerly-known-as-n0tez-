@@ -147,6 +147,44 @@
                         android:textColor="#ff00bfa5"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:text="@string/privacy_policy"/>
+                    <TextView
+                        android:textSize="14sp"
+                        android:textColor="#e0e0e0"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/privacy_policy_description"
+                        android:lineSpacingExtra="4dp"/>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPrivacyPolicy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:layout_gravity="center_horizontal"
+                        android:text="@string/privacy_policy"
+                        app:backgroundTint="@color/accent_teal"
+                        app:cornerRadius="20dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:padding="20dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#ff00bfa5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
                         android:text="Key Features"/>
                     <TextView
                         android:textSize="14sp"

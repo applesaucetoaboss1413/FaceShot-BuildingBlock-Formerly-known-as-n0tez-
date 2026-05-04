@@ -204,6 +204,9 @@
     <string name="pin_set_successfully">PIN set successfully</string>
     <string name="preference_copied">\"%1$s\" copied to clipboard.</string>
     <string name="privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_description">Read the public privacy policy used for Google Play compliance.</string>
+    <string name="privacy_policy_url">https://applesaucetoaboss1413.github.io/FaceShot-BuildingBlock-Formerly-known-as-n0tez-/privacy-policy.html</string>
+    <string name="privacy_policy_unavailable">The privacy policy page could not be opened on this device.</string>
     <string name="restore_backup">Restore Backup</string>
     <string name="save_note">Save Note</string>
     <string name="search_menu_title">Search</string>
