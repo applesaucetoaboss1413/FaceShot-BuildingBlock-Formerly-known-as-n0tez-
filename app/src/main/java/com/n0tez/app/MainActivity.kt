@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -23,7 +22,8 @@ class MainActivity : AppCompatActivity() {
     private val STORAGE_PERMISSION_REQUEST_CODE = 101
     private val ACCESSIBILITY_PERMISSION_REQUEST_CODE = 102
     private var shouldStartFloatingWidgetAfterSetup = false
-    private var permissionDialogVisible = false
+    private var hasAutoNavigatedOverlayThisSession = false
+    private var hasAutoNavigatedAccessibilityThisSession = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +32,11 @@ class MainActivity : AppCompatActivity() {
         
         setupUI()
         checkPermissions()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        maybePromptRequiredSetup()
     }
     
     private fun setupUI() {
@@ -43,7 +48,7 @@ class MainActivity : AppCompatActivity() {
                     startFloatingWidget()
                 } else {
                     shouldStartFloatingWidgetAfterSetup = true
-                    maybePromptRequiredSetup()
+                    maybePromptRequiredSetup(forceNavigation = true)
                 }
             }
 
@@ -74,7 +79,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        maybePromptRequiredSetup()
     }
     
     private fun hasOverlayPermission(): Boolean {
@@ -93,18 +97,31 @@ class MainActivity : AppCompatActivity() {
         return hasOverlayPermission() && hasAccessibilityPermission()
     }
 
-    private fun maybePromptRequiredSetup() {
-        if (permissionDialogVisible) {
-            return
-        }
+    private fun maybePromptRequiredSetup(forceNavigation: Boolean = false) {
+        resetPermissionNavigationState()
 
         when {
-            !hasOverlayPermission() -> showOverlayPermissionDialog()
-            !hasAccessibilityPermission() -> showAccessibilityPermissionDialog()
+            !hasOverlayPermission() && (forceNavigation || !hasAutoNavigatedOverlayThisSession) -> {
+                hasAutoNavigatedOverlayThisSession = true
+                openOverlayPermissionSettings()
+            }
+            !hasAccessibilityPermission() && (forceNavigation || !hasAutoNavigatedAccessibilityThisSession) -> {
+                hasAutoNavigatedAccessibilityThisSession = true
+                openAccessibilityPermissionSettings()
+            }
             shouldStartFloatingWidgetAfterSetup -> {
                 shouldStartFloatingWidgetAfterSetup = false
                 startFloatingWidget()
             }
+        }
+    }
+
+    private fun resetPermissionNavigationState() {
+        if (hasOverlayPermission()) {
+            hasAutoNavigatedOverlayThisSession = false
+        }
+        if (hasAccessibilityPermission()) {
+            hasAutoNavigatedAccessibilityThisSession = false
         }
     }
     
@@ -114,55 +131,43 @@ class MainActivity : AppCompatActivity() {
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:$packageName")
             )
-            startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE)
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE)
+            } else {
+                Toast.makeText(this, R.string.permission_settings_unavailable, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     private fun requestAccessibilityPermission() {
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-        startActivityForResult(intent, ACCESSIBILITY_PERMISSION_REQUEST_CODE)
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivityForResult(intent, ACCESSIBILITY_PERMISSION_REQUEST_CODE)
+        } else {
+            openAppDetailsSettings()
+        }
     }
 
-    private fun showOverlayPermissionDialog() {
-        permissionDialogVisible = true
-        AlertDialog.Builder(this)
-            .setTitle(R.string.overlay_permission_dialog_title)
-            .setMessage(R.string.overlay_permission_dialog_message)
-            .setCancelable(false)
-            .setPositiveButton(R.string.permission_open_settings) { _, _ ->
-                permissionDialogVisible = false
-                requestOverlayPermission()
-            }
-            .setNegativeButton(R.string.permission_not_now) { _, _ ->
-                permissionDialogVisible = false
-                shouldStartFloatingWidgetAfterSetup = false
-            }
-            .setOnCancelListener {
-                permissionDialogVisible = false
-                shouldStartFloatingWidgetAfterSetup = false
-            }
-            .show()
+    private fun openOverlayPermissionSettings() {
+        Toast.makeText(this, R.string.overlay_permission_dialog_message, Toast.LENGTH_LONG).show()
+        requestOverlayPermission()
     }
 
-    private fun showAccessibilityPermissionDialog() {
-        permissionDialogVisible = true
-        AlertDialog.Builder(this)
-            .setTitle(R.string.accessibility_permission_dialog_title)
-            .setMessage(R.string.accessibility_permission_dialog_message)
-            .setCancelable(false)
-            .setPositiveButton(R.string.permission_open_settings) { _, _ ->
-                permissionDialogVisible = false
-                requestAccessibilityPermission()
-            }
-            .setNegativeButton(R.string.permission_not_now) { _, _ ->
-                permissionDialogVisible = false
-                shouldStartFloatingWidgetAfterSetup = false
-            }
-            .setOnCancelListener {
-                permissionDialogVisible = false
-                shouldStartFloatingWidgetAfterSetup = false
-            }
-            .show()
+    private fun openAccessibilityPermissionSettings() {
+        Toast.makeText(this, R.string.accessibility_permission_dialog_message, Toast.LENGTH_LONG).show()
+        requestAccessibilityPermission()
+    }
+
+    private fun openAppDetailsSettings() {
+        val intent = Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", packageName, null),
+        )
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, R.string.permission_settings_unavailable, Toast.LENGTH_SHORT).show()
+        }
     }
     
     private fun startFloatingWidget() {
@@ -185,7 +190,7 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             OVERLAY_PERMISSION_REQUEST_CODE -> {
                 if (hasOverlayPermission()) {
-                    maybePromptRequiredSetup()
+                    maybePromptRequiredSetup(forceNavigation = true)
                 } else {
                     Toast.makeText(this, "Overlay permission denied", Toast.LENGTH_SHORT).show()
                     shouldStartFloatingWidgetAfterSetup = false
@@ -193,7 +198,7 @@ class MainActivity : AppCompatActivity() {
             }
             ACCESSIBILITY_PERMISSION_REQUEST_CODE -> {
                 if (hasAccessibilityPermission()) {
-                    maybePromptRequiredSetup()
+                    maybePromptRequiredSetup(forceNavigation = true)
                 } else {
                     Toast.makeText(
                         this,

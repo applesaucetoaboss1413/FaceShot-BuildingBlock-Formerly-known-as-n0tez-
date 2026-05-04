@@ -533,24 +533,22 @@ class FloatingWidgetService : Service() {
         var initialHeight = 0
         var initialTouchX = 0f
         var initialTouchY = 0f
+        var resized = false
 
         resizeButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    initialWidth = notepadParams?.width ?: dpToPx(notepadWidth)
-                    initialHeight = notepadParams?.height ?: dpToPx(notepadHeight)
+                    initialWidth = currentNotepadWidthPx()
+                    initialHeight = currentNotepadHeightPx()
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
+                    resized = false
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    notepadWidth = pxToDp(notepadParams?.width ?: dpToPx(320))
-                    notepadHeight = pxToDp(notepadParams?.height ?: dpToPx(WindowManager.LayoutParams.WRAP_CONTENT))
-                    
-                    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-                        .putInt("notepad_width", notepadWidth)
-                        .putInt("notepad_height", notepadHeight)
-                        .apply()
+                    if (resized) {
+                        saveResizedNotepadDimensions()
+                    }
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -562,6 +560,7 @@ class FloatingWidgetService : Service() {
 
                     notepadParams?.width = newWidth
                     notepadParams?.height = newHeight
+                    resized = true
                     
                     try {
                         windowManager?.updateViewLayout(floatingNotepadView, notepadParams)
@@ -573,6 +572,39 @@ class FloatingWidgetService : Service() {
                 else -> false
             }
         }
+    }
+
+    private fun currentNotepadWidthPx(): Int {
+        val measuredWidth = floatingNotepadView?.width ?: 0
+        val paramWidth = notepadParams?.width ?: 0
+        return when {
+            measuredWidth > 0 -> measuredWidth
+            paramWidth > 0 -> paramWidth
+            else -> dpToPx(notepadWidth.coerceAtLeast(200))
+        }
+    }
+
+    private fun currentNotepadHeightPx(): Int {
+        val measuredHeight = floatingNotepadView?.height ?: 0
+        val paramHeight = notepadParams?.height ?: 0
+        return when {
+            measuredHeight > 0 -> measuredHeight
+            paramHeight > 0 -> paramHeight
+            else -> dpToPx(320)
+        }
+    }
+
+    private fun saveResizedNotepadDimensions() {
+        val widthPx = notepadParams?.width?.takeIf { it > 0 } ?: currentNotepadWidthPx()
+        val heightPx = notepadParams?.height?.takeIf { it > 0 } ?: currentNotepadHeightPx()
+
+        notepadWidth = pxToDp(widthPx).coerceAtLeast(200)
+        notepadHeight = pxToDp(heightPx).coerceAtLeast(200)
+
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+            .putInt("notepad_width", notepadWidth)
+            .putInt("notepad_height", notepadHeight)
+            .apply()
     }
 
     private fun saveCurrentNote() {

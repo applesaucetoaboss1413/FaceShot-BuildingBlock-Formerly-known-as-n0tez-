@@ -198,6 +198,7 @@
     <string name="permission_required">Permission required</string>
     <string name="permission_not_now">Not now</string>
     <string name="permission_open_settings">Open Settings</string>
+    <string name="permission_settings_unavailable">This device could not open the required Settings screen.</string>
     <string name="pin_note">Pin Note</string>
     <string name="pin_security">PIN Security</string>
     <string name="pin_set_successfully">PIN set successfully</string>
