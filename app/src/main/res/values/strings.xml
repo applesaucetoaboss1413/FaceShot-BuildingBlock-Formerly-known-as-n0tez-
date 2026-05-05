@@ -244,6 +244,25 @@
     <string name="version">Version %1$s</string>
     <string name="widget_size">Widget Size</string>
     <string name="widget_started">Floating widget started</string>
+    <string name="widget_start_failed">Failed to start widget: %1$s</string>
     <string name="widget_stopped">Floating widget stopped</string>
     <string name="wrong_pin">Wrong PIN. Try again.</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="dashboard_permissions_ready">Overlay and text capture are live. Floating note can launch immediately.</string>
+    <string name="dashboard_permissions_missing">Finish setup for overlay and accessibility access to unlock the floating note workflow.</string>
+    <string name="multimedia_title">Multimedia Studio</string>
+    <string name="visit_chopshop">Visit ChopShop</string>
+    <string name="app_site_url">https://faceshot-chopshop-1.onrender.com</string>
+    <string name="about_product_title">Professional product shell</string>
+    <string name="about_product_summary">The refreshed interface now presents the app as a polished premium tool instead of a collection of separate screens.</string>
+    <string name="about_site_title">Public site</string>
+    <string name="about_site_summary">Open the public product page for brand, product, and distribution context.</string>
+    <string name="settings_privacy_title">Privacy policy</string>
+    <string name="settings_privacy_summary">Review the public policy page used for product trust and store compliance.</string>
+    <string name="settings_customize_title">Visual defaults</string>
+    <string name="settings_customize_summary">Tune the default overlay appearance so the note experience matches your workflow.</string>
+    <string name="settings_pin_summary">Require a four-digit PIN before opening protected notes.</string>
+    <string name="settings_transparency_summary">Adjust the default floating note opacity so the overlay feels intentional and readable.</string>
+    <string name="settings_overlay_level">Overlay visibility: %1$d%%</string>
+    <string name="settings_pin_disable_failed">Could not disable PIN protection.</string>
 </resources>
