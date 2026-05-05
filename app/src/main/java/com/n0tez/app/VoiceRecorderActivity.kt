@@ -1,7 +1,6 @@
 package com.n0tez.app
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.os.Build
@@ -9,23 +8,60 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.n0tez.app.databinding.ActivityVoiceRecorderBinding
+import com.n0tez.app.ui.compose.FaceshotTheme
+import com.n0tez.app.ui.compose.FuturisticScreen
+import com.n0tez.app.ui.compose.GlassPanel
+import com.n0tez.app.ui.compose.HeroCard
+import com.n0tez.app.ui.compose.PrimaryButton
+import com.n0tez.app.ui.compose.SecondaryButton
+import com.n0tez.app.ui.compose.SectionHeader
+import com.n0tez.app.ui.compose.StatusPillRow
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
+import kotlin.math.sin
 
 class VoiceRecorderActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityVoiceRecorderBinding
     private var mediaRecorder: MediaRecorder? = null
-    private var isRecording = false
-    private var isPaused = false
-    private var recordingStartTime = 0L
-    private var recordingDuration = 0L
+    private var isRecording by mutableStateOf(false)
+    private var isPaused by mutableStateOf(false)
+    private var recordingStartTime by mutableLongStateOf(0L)
+    private var recordingDuration by mutableLongStateOf(0L)
+    private var elapsedTime by mutableLongStateOf(0L)
+    private var timerDisplay by mutableStateOf("00:00.00")
+    private var waveformSeed by mutableFloatStateOf(0f)
     private var audioFilePath: String? = null
     private val handler = Handler(Looper.getMainLooper())
 
@@ -40,8 +76,10 @@ class VoiceRecorderActivity : AppCompatActivity() {
     private val updateTimerRunnable = object : Runnable {
         override fun run() {
             if (isRecording && !isPaused) {
-                val elapsed = (System.currentTimeMillis() - recordingStartTime) + recordingDuration
+                val elapsed = currentElapsedMs()
+                elapsedTime = elapsed
                 updateTimerDisplay(elapsed)
+                waveformSeed += 0.08f
                 handler.postDelayed(this, 100L)
             }
         }
@@ -49,34 +87,11 @@ class VoiceRecorderActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityVoiceRecorderBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        setupUI()
-    }
-
-    private fun setupUI() {
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Voice Recorder"
-
-        binding.btnRecord.setOnClickListener {
-            if (!isRecording) {
-                checkPermissionAndRecord()
-            } else {
-                stopRecording()
+        setContent {
+            FaceshotTheme {
+                VoiceRecorderScreen()
             }
         }
-
-        binding.btnPause.setOnClickListener {
-            if (isRecording) {
-                togglePauseRecording()
-            }
-        }
-
-        binding.btnSave.setOnClickListener { saveRecording() }
-        binding.btnDiscard.setOnClickListener { discardRecording() }
-
-        updateUIState()
     }
 
     private fun checkPermissionAndRecord() {
@@ -115,12 +130,11 @@ class VoiceRecorderActivity : AppCompatActivity() {
             isPaused = false
             recordingStartTime = System.currentTimeMillis()
             recordingDuration = 0L
+            elapsedTime = 0L
+            timerDisplay = "00:00.00"
             handler.post(updateTimerRunnable)
-            updateUIState()
             Toast.makeText(this, "Recording started", Toast.LENGTH_SHORT).show()
-
         } catch (e: IOException) {
-            e.printStackTrace()
             Toast.makeText(this, "Failed to start recording: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
@@ -136,12 +150,12 @@ class VoiceRecorderActivity : AppCompatActivity() {
             } else {
                 mediaRecorder?.pause()
                 recordingDuration += System.currentTimeMillis() - recordingStartTime
+                elapsedTime = recordingDuration
                 isPaused = true
+                updateTimerDisplay(elapsedTime)
                 Toast.makeText(this, "Recording paused", Toast.LENGTH_SHORT).show()
             }
-            updateUIState()
         } catch (e: Exception) {
-            e.printStackTrace()
             Toast.makeText(this, "Failed to pause/resume: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
@@ -153,13 +167,14 @@ class VoiceRecorderActivity : AppCompatActivity() {
                 release()
             }
             mediaRecorder = null
+            recordingDuration = currentElapsedMs()
+            elapsedTime = recordingDuration
             isRecording = false
             isPaused = false
             handler.removeCallbacks(updateTimerRunnable)
-            updateUIState()
+            updateTimerDisplay(elapsedTime)
             Toast.makeText(this, "Recording stopped", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            e.printStackTrace()
             Toast.makeText(this, "Failed to stop recording: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
@@ -182,46 +197,20 @@ class VoiceRecorderActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun currentElapsedMs(): Long {
+        return if (isRecording && !isPaused) {
+            (System.currentTimeMillis() - recordingStartTime) + recordingDuration
+        } else {
+            recordingDuration
+        }
+    }
+
     private fun updateTimerDisplay(milliseconds: Long) {
         val seconds = milliseconds / 1000
         val minutes = seconds / 60
         val remainingSeconds = seconds % 60
         val millis = (milliseconds % 1000) / 10
-        binding.tvTimer.text = String.format("%02d:%02d.%02d", minutes, remainingSeconds, millis)
-    }
-
-    private fun updateUIState() {
-        if (isRecording && !isPaused) {
-            binding.btnRecord.text = "Stop"
-            binding.btnRecord.setIconResource(R.drawable.ic_close)
-            binding.btnPause.isEnabled = true
-            binding.btnPause.text = "Pause"
-            binding.btnSave.isEnabled = false
-            binding.btnDiscard.isEnabled = false
-            binding.waveformView.visibility = android.view.View.VISIBLE
-        } else if (isRecording && isPaused) {
-            binding.btnRecord.text = "Stop"
-            binding.btnRecord.setIconResource(R.drawable.ic_close)
-            binding.btnPause.isEnabled = true
-            binding.btnPause.text = "Resume"
-            binding.btnSave.isEnabled = false
-            binding.btnDiscard.isEnabled = false
-        } else if (!isRecording && audioFilePath != null) {
-            binding.btnRecord.text = "Record"
-            binding.btnRecord.setIconResource(R.drawable.ic_add) // Assuming ic_add or ic_mic
-            binding.btnPause.isEnabled = false
-            binding.btnSave.isEnabled = true
-            binding.btnDiscard.isEnabled = true
-            binding.waveformView.visibility = android.view.View.GONE
-        } else {
-            // Initial state
-            binding.btnRecord.text = "Record"
-            binding.btnRecord.setIconResource(R.drawable.ic_add) // Assuming ic_add or ic_mic
-            binding.btnPause.isEnabled = false
-            binding.btnSave.isEnabled = false
-            binding.btnDiscard.isEnabled = false
-            binding.waveformView.visibility = android.view.View.GONE
-        }
+        timerDisplay = String.format("%02d:%02d.%02d", minutes, remainingSeconds, millis)
     }
 
     override fun onDestroy() {
@@ -232,8 +221,159 @@ class VoiceRecorderActivity : AppCompatActivity() {
         handler.removeCallbacks(updateTimerRunnable)
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
+    @Composable
+    private fun VoiceRecorderScreen() {
+        val hasSavedClip = audioFilePath != null
+        val recordingState = when {
+            isRecording && !isPaused -> "Recording"
+            isRecording -> "Paused"
+            hasSavedClip -> "Ready to save"
+            else -> "Idle"
+        }
+
+        FuturisticScreen(
+            title = "Voice Recorder",
+            onBack = { finish() },
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 20.dp),
+                contentPadding = PaddingValues(bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                item {
+                    HeroCard(
+                        eyebrow = "Audio Capture",
+                        title = "A cleaner recording console with premium visual hierarchy.",
+                        description = "Timer, capture controls, and save actions now sit in one polished shell for faster recording and fewer mis-taps.",
+                    )
+                }
+                item {
+                    StatusPillRow(
+                        statuses = listOf(
+                            "Mic Ready" to hasRecordPermission(),
+                            recordingState to (isRecording || hasSavedClip),
+                            "Live Waveform" to (isRecording && !isPaused),
+                        ),
+                    )
+                }
+                item {
+                    GlassPanel {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp),
+                        ) {
+                            SectionHeader(
+                                title = "Recorder Status",
+                                subtitle = "Capture clear audio, pause safely, then save or discard with confidence.",
+                            )
+                            Text(
+                                text = timerDisplay,
+                                style = MaterialTheme.typography.displayMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = recordingState,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            WaveformPreview(
+                                active = isRecording && !isPaused,
+                                progressSeed = waveformSeed + (elapsedTime / 1000f),
+                            )
+                        }
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        PrimaryButton(
+                            text = if (isRecording) "Stop" else "Record",
+                            onClick = {
+                                if (isRecording) {
+                                    stopRecording()
+                                } else {
+                                    checkPermissionAndRecord()
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                        SecondaryButton(
+                            text = if (isPaused) "Resume" else "Pause",
+                            onClick = ::togglePauseRecording,
+                            enabled = isRecording,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        PrimaryButton(
+                            text = "Save",
+                            onClick = ::saveRecording,
+                            enabled = !isRecording && hasSavedClip,
+                            modifier = Modifier.weight(1f),
+                        )
+                        SecondaryButton(
+                            text = "Discard",
+                            onClick = ::discardRecording,
+                            enabled = !isRecording && hasSavedClip,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun WaveformPreview(active: Boolean, progressSeed: Float) {
+        val bars = remember(progressSeed) {
+            List(28) { index ->
+                val wave = sin(progressSeed + (index * 0.38f))
+                0.24f + ((wave + 1f) / 2f) * 0.74f
+            }
+        }
+        val waveColors = listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.92f),
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.86f),
+            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.82f),
+        )
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(110.dp),
+        ) {
+            val gap = 6f
+            val barCount = bars.size
+            val barWidth = ((size.width - (barCount - 1) * gap) / barCount).coerceAtLeast(4f)
+            bars.forEachIndexed { index, value ->
+                val left = index * (barWidth + gap)
+                val ratio = if (active) value else 0.18f
+                val barHeight = size.height * ratio
+                val top = (size.height - barHeight) / 2f
+                drawRoundRect(
+                    brush = Brush.verticalGradient(waveColors),
+                    topLeft = Offset(left, top),
+                    size = Size(barWidth, barHeight),
+                    cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f),
+                )
+            }
+        }
+    }
+
+    private fun hasRecordPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECORD_AUDIO,
+        ) == PackageManager.PERMISSION_GRANTED
     }
 }

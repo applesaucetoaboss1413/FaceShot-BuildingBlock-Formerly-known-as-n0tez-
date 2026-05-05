@@ -101,7 +101,7 @@ fun FuturisticScreen(
                                 fontWeight = FontWeight.Bold,
                             )
                             Text(
-                                text = "Future-ready workspace",
+                                text = "Premium workspace",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -109,15 +109,29 @@ fun FuturisticScreen(
                     },
                     navigationIcon = {
                         if (onBack != null) {
-                            TextButton(onClick = onBack) {
-                                Text(text = "Back")
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+                                ),
+                            ) {
+                                TextButton(onClick = onBack) {
+                                    Text(text = "Back")
+                                }
                             }
                         }
                     },
                     actions = {
                         actions.forEach { action ->
-                            TextButton(onClick = action.onClick) {
-                                Text(text = action.label)
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.56f),
+                            ) {
+                                TextButton(onClick = action.onClick) {
+                                    Text(text = action.label)
+                                }
                             }
                         }
                     },
@@ -133,9 +147,9 @@ fun FuturisticScreen(
 fun FaceshotBackground(content: @Composable () -> Unit) {
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFF030812),
-            Color(0xFF09111F),
-            Color(0xFF060B15),
+            Color(0xFF030814),
+            Color(0xFF091221),
+            Color(0xFF050A13),
         ),
     )
 
@@ -149,8 +163,8 @@ fun FaceshotBackground(content: @Composable () -> Unit) {
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color(0x4020D8FF), Color.Transparent),
-                        radius = 780f,
+                        colors = listOf(Color(0x4D26D4FF), Color.Transparent),
+                        radius = 720f,
                     ),
                 ),
         )
@@ -159,8 +173,8 @@ fun FaceshotBackground(content: @Composable () -> Unit) {
                 .fillMaxSize()
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(Color(0x303A52FF), Color.Transparent),
-                        radius = 1120f,
+                        colors = listOf(Color(0x387E6BFF), Color.Transparent),
+                        radius = 960f,
                     ),
                 ),
         )
@@ -170,7 +184,16 @@ fun FaceshotBackground(content: @Composable () -> Unit) {
                 .background(
                     Brush.radialGradient(
                         colors = listOf(Color(0x1FD7FFF4), Color.Transparent),
-                        radius = 1320f,
+                        radius = 1280f,
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0x14000000), Color.Transparent, Color(0x18000000)),
                     ),
                 ),
         )
@@ -187,7 +210,7 @@ fun HeroCard(
     GlassPanel {
         Column(
             modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             StatusPill(
                 text = eyebrow.uppercase(),
@@ -225,7 +248,7 @@ fun GlassPanel(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.84f),
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
         ),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
@@ -241,11 +264,11 @@ fun GlassPanel(
     ) {
         Box(
             modifier = Modifier.background(
-                Brush.linearGradient(
+                Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.12f),
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.08f),
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
                     ),
                 ),
             ),
@@ -326,10 +349,9 @@ fun ActionCard(
                         )
                     }
                 }
-                Icon(
-                    imageVector = Icons.Outlined.ArrowForward,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                StatusPill(
+                    text = "Launch",
+                    active = true,
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -464,13 +486,18 @@ fun PrimaryButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 6.dp,
+            pressedElevation = 2.dp,
+            disabledElevation = 0.dp,
+        ),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 17.dp),
     ) {
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
@@ -487,12 +514,12 @@ fun SecondaryButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.filledTonalButtonColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
             contentColor = MaterialTheme.colorScheme.onSurface,
         ),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 17.dp),
     ) {
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
@@ -503,7 +530,7 @@ fun InfoStrip(text: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
             MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f),
