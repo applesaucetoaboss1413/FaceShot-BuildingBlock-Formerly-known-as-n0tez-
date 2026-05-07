@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="size_entries">
+        <item>Small</item>
+        <item>Medium</item>
+        <item>Large</item>
+    </array>
+    <array name="size_values">
+        <item>small</item>
+        <item>medium</item>
+        <item>large</item>
+    </array>
+    <array name="theme_entries">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>System</item>
+    </array>
+    <array name="theme_values">
+        <item>light</item>
+        <item>dark</item>
+        <item>system</item>
+    </array>
+    <array name="video_quality_options">
+        <item>Original Quality</item>
+        <item>High (1080p)</item>
+        <item>Medium (720p)</item>
+        <item>Low (480p)</item>
+    </array>
+</resources>

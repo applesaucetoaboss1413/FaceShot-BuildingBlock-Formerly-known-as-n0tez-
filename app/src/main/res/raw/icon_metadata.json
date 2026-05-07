@@ -1,0 +1,4 @@
+{
+  "primary": {"exists":true,"format":"jpeg","width":1024,"height":1024,"sizeBytes":35852},
+  "overlay": {"exists":true,"format":"jpeg","width":1024,"height":1024,"sizeBytes":38441}
+}

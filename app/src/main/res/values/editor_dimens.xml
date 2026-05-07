@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="editor_spacing_xs">4dp</dimen>
+    <dimen name="editor_spacing_s">8dp</dimen>
+    <dimen name="editor_spacing_m">12dp</dimen>
+    <dimen name="editor_spacing_l">16dp</dimen>
+    <dimen name="editor_spacing_xl">24dp</dimen>
+
+    <dimen name="editor_corner_radius_s">12dp</dimen>
+    <dimen name="editor_corner_radius_m">16dp</dimen>
+
+    <dimen name="editor_tool_item_width">55dp</dimen>
+    <dimen name="editor_tool_item_height">84dp</dimen>
+    <dimen name="editor_tool_icon_size">24dp</dimen>
+
+    <dimen name="editor_text_tool_label">11sp</dimen>
+</resources>
+

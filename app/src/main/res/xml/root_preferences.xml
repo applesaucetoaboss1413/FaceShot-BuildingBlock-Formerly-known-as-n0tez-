@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory
+        android:title="Widget Settings"
+        app:iconSpaceReserved="false">
+        <SeekBarPreference
+            android:max="100"
+            android:title="Default Transparency"
+            android:key="default_transparency"
+            android:summary="Set the default transparency for the floating widget"
+            android:defaultValue="20"
+            app:iconSpaceReserved="false"
+            app:showSeekBarValue="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Security"
+        app:iconSpaceReserved="false">
+        <SwitchPreferenceCompat
+            android:title="PIN Protection"
+            android:key="pin_enabled"
+            android:summary="Require 4-digit PIN to open notes"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="About"
+        app:iconSpaceReserved="false">
+        <Preference
+            android:title="About n0tez"
+            android:key="about"
+            android:summary="Version info and features"
+            app:iconSpaceReserved="false"/>
+        <Preference
+            android:title="Privacy Information"
+            android:key="privacy_info"
+            android:summary="How your data is handled"
+            app:iconSpaceReserved="false"/>
+    </PreferenceCategory>
+</PreferenceScreen>

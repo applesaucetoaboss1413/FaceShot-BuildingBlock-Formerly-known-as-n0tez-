@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <application
+        android:name=".N0tezApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.N0tez"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        tools:targetApi="33">
+        
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.N0tez"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <!-- Note Editor Activity -->
+        <activity
+            android:name=".NoteEditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Notes List Activity -->
+        <activity
+            android:name=".NotesListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Multimedia Activity -->
+        <activity
+            android:name=".MultimediaActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Voice Recorder Activity -->
+        <activity
+            android:name=".VoiceRecorderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MultimediaActivity" />
+
+        <!-- Audio Editor Activity -->
+        <activity
+            android:name=".AudioEditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MultimediaActivity" />
+
+        <!-- Photo Editor Activity -->
+        <activity
+            android:name=".PhotoEditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MultimediaActivity" />
+
+        <!-- Video Editor Activity -->
+        <activity
+            android:name=".VideoEditorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MultimediaActivity" />
+        
+        <!-- Media Gallery Activity -->
+        <activity
+            android:name=".MediaGalleryActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MultimediaActivity" />
+
+        <!-- About Activity -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- UCrop Activity -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        
+        <!-- Floating Widget Service -->
+        <service
+            android:name=".FloatingWidgetService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Floating notepad overlay widget" />
+        </service>
+
+        <service
+            android:name=".TextCaptureAccessibilityService"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibilityservice" />
+        </service>
+        
+        <!-- Settings Activity -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:parentActivityName=".MainActivity" />
+            
+        <!-- Pin Lock Activity -->
+        <activity
+            android:name=".PinLockActivity"
+            android:exported="false"
+            android:theme="@style/Theme.N0tez"
+            android:windowSoftInputMode="adjustResize" />
+        
+        <!-- File Provider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.n0tez.app.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Firebase default notification settings -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/purple_500" />
+            
+    </application>
+
+</manifest>
