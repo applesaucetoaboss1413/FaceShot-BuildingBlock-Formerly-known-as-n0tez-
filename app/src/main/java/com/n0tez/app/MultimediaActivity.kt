@@ -17,8 +17,10 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.HighQuality
+import androidx.compose.material.icons.rounded.MovieFilter
 import androidx.compose.material.icons.rounded.PhotoCameraBack
 import androidx.compose.material.icons.rounded.RocketLaunch
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.VideoSettings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -27,8 +29,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.n0tez.app.ui.components.ActionCard
 import com.n0tez.app.ui.components.AppScreen
+import com.n0tez.app.ui.components.GlassPanel
 import com.n0tez.app.ui.components.HeroPanel
 import com.n0tez.app.ui.components.MetricChip
+import com.n0tez.app.ui.components.SectionHeading
 import com.n0tez.app.ui.theme.N0tezTheme
 
 class MultimediaActivity : AppCompatActivity() {
@@ -149,10 +153,27 @@ private fun MultimediaScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
+                GlassPanel {
+                    SectionHeading(
+                        eyebrow = "Studio Deck",
+                        title = "Create in a darker, sharper media workspace.",
+                        description = "The studio now opens as a focused creative bay with dedicated lanes for stills, motion, audio, and asset review."
+                    )
+                    androidx.compose.foundation.layout.FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        MetricChip("Visual feel", "Cinematic", Icons.Rounded.MovieFilter)
+                        MetricChip("Editing flow", "Focused", Icons.Rounded.Tune)
+                        MetricChip("Output level", "High quality", Icons.Rounded.HighQuality)
+                    }
+                }
+            }
+            item {
                 HeroPanel(
                     eyebrow = "Studio",
                     title = "High-end media controls in one place.",
-                    description = "This shell now treats photo, video, audio, and gallery tools like one premium creation suite with clearer visual rhythm.",
+                    description = "Photo, video, audio, and gallery tools now read like one premium creation suite instead of separate utility pages.",
                     metrics = {
                         MetricChip("Creative lanes", "4 tools", Icons.Rounded.RocketLaunch)
                         MetricChip("Output feel", "Pro grade", Icons.Rounded.HighQuality)

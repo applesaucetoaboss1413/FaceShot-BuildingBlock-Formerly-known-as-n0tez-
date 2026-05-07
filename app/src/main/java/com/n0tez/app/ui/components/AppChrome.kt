@@ -2,6 +2,7 @@ package com.n0tez.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
@@ -36,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,10 +47,10 @@ fun FuturisticBackground(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    val backgroundGradient = Brush.linearGradient(
+    val backgroundGradient = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.background,
-            Color(0xFF06111E),
+            Color(0xFF071321),
             MaterialTheme.colorScheme.surfaceVariant,
             Color(0xFF03070F)
         )
@@ -58,40 +60,45 @@ fun FuturisticBackground(
             .fillMaxSize()
             .background(backgroundGradient)
     ) {
-        GlowOrb(
+        CyberGridOverlay(
             modifier = Modifier
-                .size(320.dp)
-                .align(Alignment.TopEnd)
-                .padding(top = 12.dp, end = 12.dp),
-            colors = listOf(
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.24f),
-                Color.Transparent
-            )
-        )
-        GlowOrb(
-            modifier = Modifier
-                .size(280.dp)
-                .align(Alignment.TopStart)
-                .padding(top = 120.dp, start = 8.dp),
-            colors = listOf(
-                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.16f),
-                Color.Transparent
-            )
+                .fillMaxSize()
+                .padding(horizontal = 8.dp)
         )
         GlowOrb(
             modifier = Modifier
                 .size(360.dp)
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp),
+                .align(Alignment.TopEnd)
+                .padding(top = 0.dp, end = 0.dp),
             colors = listOf(
-                MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.28f),
+                Color.Transparent
+            )
+        )
+        GlowOrb(
+            modifier = Modifier
+                .size(300.dp)
+                .align(Alignment.TopStart)
+                .padding(top = 140.dp, start = (-24).dp),
+            colors = listOf(
+                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.18f),
+                Color.Transparent
+            )
+        )
+        GlowOrb(
+            modifier = Modifier
+                .size(420.dp)
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 24.dp, end = (-48).dp),
+            colors = listOf(
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f),
                 Color.Transparent
             )
         )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
+                .height(340.dp)
                 .clip(RoundedCornerShape(bottomStart = 48.dp, bottomEnd = 48.dp))
                 .background(
                     Brush.verticalGradient(
@@ -104,6 +111,42 @@ fun FuturisticBackground(
                 )
         )
         content()
+    }
+}
+
+@Composable
+private fun CyberGridOverlay(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val verticalStep = 36.dp.toPx()
+        val horizontalStep = 42.dp.toPx()
+        val gridColor = Color.White.copy(alpha = 0.035f)
+        var x = 0f
+        while (x < size.width) {
+            drawLine(
+                color = gridColor,
+                start = androidx.compose.ui.geometry.Offset(x, 0f),
+                end = androidx.compose.ui.geometry.Offset(x, size.height),
+                strokeWidth = 1.dp.toPx()
+            )
+            x += verticalStep
+        }
+        var y = 0f
+        while (y < size.height) {
+            drawLine(
+                color = gridColor,
+                start = androidx.compose.ui.geometry.Offset(0f, y),
+                end = androidx.compose.ui.geometry.Offset(size.width, y),
+                strokeWidth = 1.dp.toPx()
+            )
+            y += horizontalStep
+        }
+        drawRoundRect(
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+            topLeft = androidx.compose.ui.geometry.Offset(size.width * 0.06f, size.height * 0.12f),
+            size = androidx.compose.ui.geometry.Size(size.width * 0.88f, size.height * 0.72f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(44.dp.toPx(), 44.dp.toPx()),
+            style = Stroke(width = 1.dp.toPx())
+        )
     }
 }
 
@@ -134,47 +177,57 @@ fun AppScreen(
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                CenterAlignedTopAppBar(
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.Transparent,
-                        titleContentColor = MaterialTheme.colorScheme.onBackground,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
-                        actionIconContentColor = MaterialTheme.colorScheme.onBackground
-                    ),
-                    title = {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            if (subtitle != null) {
+                Surface(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+                    tonalElevation = 10.dp,
+                    shadowElevation = 10.dp
+                ) {
+                    CenterAlignedTopAppBar(
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = MaterialTheme.colorScheme.onBackground,
+                            navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                            actionIconContentColor = MaterialTheme.colorScheme.onBackground
+                        ),
+                        title = {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = subtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    text = title,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
                                 )
-                            }
-                        }
-                    },
-                    navigationIcon = {
-                        if (navigationIcon != null && onNavigationClick != null) {
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.78f),
-                                tonalElevation = 6.dp
-                            ) {
-                                IconButton(onClick = onNavigationClick) {
-                                    Icon(
-                                        imageVector = navigationIcon,
-                                        contentDescription = "Back"
+                                if (subtitle != null) {
+                                    Text(
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
-                        }
-                    },
-                    actions = actions
-                )
+                        },
+                        navigationIcon = {
+                            if (navigationIcon != null && onNavigationClick != null) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f),
+                                    tonalElevation = 6.dp
+                                ) {
+                                    IconButton(onClick = onNavigationClick) {
+                                        Icon(
+                                            imageVector = navigationIcon,
+                                            contentDescription = "Back"
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        actions = actions
+                    )
+                }
             }
         ) { innerPadding ->
             content(innerPadding)
@@ -192,13 +245,13 @@ fun GlassPanel(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
                 shape = RoundedCornerShape(30.dp)
             ),
         shape = RoundedCornerShape(30.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
-        tonalElevation = 16.dp,
-        shadowElevation = 14.dp
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
+        tonalElevation = 18.dp,
+        shadowElevation = 20.dp
     ) {
         Column(
             modifier = Modifier.padding(22.dp),
@@ -343,12 +396,21 @@ fun ActionCard(
         onClick = onClick,
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f)
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 14.dp)
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
+            modifier = Modifier
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            accent.copy(alpha = 0.16f),
+                            Color.Transparent
+                        )
+                    )
+                )
+                .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(

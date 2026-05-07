@@ -20,13 +20,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.ShieldMoon
 import androidx.compose.material.icons.rounded.ViewInAr
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,8 +42,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.unit.dp
 import com.n0tez.app.ui.components.ActionCard
 import com.n0tez.app.ui.components.AppScreen
+import com.n0tez.app.ui.components.GlassPanel
 import com.n0tez.app.ui.components.HeroPanel
 import com.n0tez.app.ui.components.MetricChip
+import com.n0tez.app.ui.components.SectionHeading
 import com.n0tez.app.ui.theme.N0tezTheme
 
 class MainActivity : AppCompatActivity() {
@@ -214,14 +221,47 @@ private fun MainScreen(
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             item {
+                GlassPanel {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(999.dp)
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            text = "DIRECTOR MODE",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        text = "FaceShot now opens like a premium command deck.",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "Sharper hierarchy, deeper contrast, and more cinematic control surfaces make the first screen feel like a real product shell instead of a plain menu.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        MetricChip("Launch feel", "Immersive", Icons.Rounded.Bolt)
+                        MetricChip("Material", "M3 glass", Icons.Rounded.AutoAwesome)
+                        MetricChip("Focus", "Fast lanes", Icons.Rounded.RocketLaunch)
+                    }
+                }
+            }
+            item {
                 HeroPanel(
-                    eyebrow = "Command",
-                    title = "A sharper control center for the full FaceShot suite.",
-                    description = "The new shell leans into premium depth, cleaner spacing, and quicker access so the product feels closer to a polished pro tool than a utility list.",
+                    eyebrow = "Control Grid",
+                    title = "Jump straight into the lanes that matter.",
+                    description = "Notes, media tools, settings, and the floating widget are grouped as premium actions instead of a generic stack of buttons.",
                     metrics = {
                         MetricChip("Core hubs", "4 modes", Icons.Rounded.RocketLaunch)
-                        MetricChip("Security", "PIN ready", Icons.Rounded.Lock)
-                        MetricChip("Visual system", "Material 3", Icons.Rounded.AutoAwesome)
+                        MetricChip("Security", "PIN ready", Icons.Rounded.ShieldMoon)
+                        MetricChip("Creative shell", "Neon dark", Icons.Rounded.Palette)
                     }
                 )
             }
@@ -241,13 +281,21 @@ private fun MainScreen(
                 }
             }
             item {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    MetricChip("Experience", "Futuristic", Icons.Rounded.AutoAwesome)
-                    MetricChip("Access", "One tap", Icons.Rounded.Widgets)
-                    MetricChip("Tools", "Notes + media", Icons.Rounded.ViewInAr)
+                GlassPanel {
+                    SectionHeading(
+                        eyebrow = "System Readiness",
+                        title = "Built to feel locked-in and production ready.",
+                        description = "The shell keeps the overlay workflow, encrypted notes, and studio access visible without drowning the screen in flat controls."
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        MetricChip("Experience", "Futuristic", Icons.Rounded.AutoAwesome)
+                        MetricChip("Access", "One tap", Icons.Rounded.Widgets)
+                        MetricChip("Tools", "Notes + media", Icons.Rounded.ViewInAr)
+                        MetricChip("Protection", "Private", Icons.Rounded.Lock)
+                    }
                 }
             }
         }

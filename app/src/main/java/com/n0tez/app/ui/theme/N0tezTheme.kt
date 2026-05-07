@@ -93,10 +93,14 @@ private val N0tezLightColorScheme: ColorScheme = lightColorScheme(
 
 @Composable
 fun N0tezTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) N0tezDarkColorScheme else N0tezLightColorScheme
+    val colorScheme = if (darkTheme || isSystemInDarkTheme()) {
+        N0tezDarkColorScheme
+    } else {
+        N0tezLightColorScheme
+    }
     MaterialTheme(
         colorScheme = colorScheme,
         typography = N0tezTypography,
