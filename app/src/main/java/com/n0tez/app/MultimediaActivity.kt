@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -92,6 +93,7 @@ private data class StudioTool(
     val onClick: () -> Unit
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MultimediaScreen(
     onBack: () -> Unit,

@@ -39,11 +39,49 @@
             android:padding="20dp">
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="14dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PHOTO LAB"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="12sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Edit stills in a sharper cinematic workspace."
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="24sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Cutouts, cleanup, filters, drawing, and export controls now sit inside a more premium dark shell."
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
                 android:layout_height="280dp"
                 android:layout_marginBottom="12dp"
                 app:cardBackgroundColor="?attr/colorSurface"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="10dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="14dp"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
                 <FrameLayout
@@ -79,19 +117,19 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSelectImage"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="56dp"
                 android:layout_marginBottom="12dp"
                 android:text="Choose image"
                 app:backgroundTint="?attr/colorPrimary"
-                app:cornerRadius="18dp"
+                app:cornerRadius="24dp"
                 app:icon="@drawable/ic_add"/>
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 app:cardBackgroundColor="?attr/colorSurface"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="10dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="14dp"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
                 <LinearLayout
@@ -359,9 +397,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="12dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp">
                 <LinearLayout
                     android:orientation="vertical"
                     android:padding="16dp"
@@ -395,34 +435,34 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSave"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
                     android:text="Save"
                     android:layout_weight="1"
                     android:layout_marginEnd="4dp"
                     app:backgroundTint="@color/accent_teal"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="20dp"
                     app:icon="@drawable/ic_save"/>
                 <com.google.android.material.button.MaterialButton
                     android:textColor="#ff00e5ff"
                     android:id="@+id/btnShare"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
                     android:text="Share"
                     android:layout_weight="1"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="20dp"
                     app:icon="@drawable/ic_share"
                     app:strokeColor="#ff00e5ff"
                     style="@style/Widget.Material3.Button.OutlinedButton"/>
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCancel"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="56dp"
                     android:text="Cancel"
                     android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="20dp"
                     app:icon="@drawable/ic_close"
                     app:strokeColor="#ff00bfa5"
                     style="@style/Widget.Material3.Button.OutlinedButton"/>

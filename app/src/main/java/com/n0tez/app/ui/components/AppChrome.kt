@@ -116,6 +116,7 @@ fun FuturisticBackground(
 
 @Composable
 private fun CyberGridOverlay(modifier: Modifier = Modifier) {
+    val gridAccent = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
     Canvas(modifier = modifier) {
         val verticalStep = 36.dp.toPx()
         val horizontalStep = 42.dp.toPx()
@@ -141,7 +142,7 @@ private fun CyberGridOverlay(modifier: Modifier = Modifier) {
             y += horizontalStep
         }
         drawRoundRect(
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+            color = gridAccent,
             topLeft = androidx.compose.ui.geometry.Offset(size.width * 0.06f, size.height * 0.12f),
             size = androidx.compose.ui.geometry.Size(size.width * 0.88f, size.height * 0.72f),
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(44.dp.toPx(), 44.dp.toPx()),

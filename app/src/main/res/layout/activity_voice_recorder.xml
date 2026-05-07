@@ -41,8 +41,51 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 app:cardBackgroundColor="?attr/colorSurface"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="10dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="14dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="VOICE SUITE"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Capture audio in a darker premium recording booth."
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Recording, pausing, saving, and discard actions now feel more intentional and less like a utility screen."
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="14dp"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
@@ -95,8 +138,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="?attr/colorSurface"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="10dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="14dp"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
 
@@ -125,12 +168,12 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRecord"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="56dp"
                         android:layout_marginTop="18dp"
                         android:text="Record"
                         android:textSize="18sp"
                         app:backgroundTint="?attr/colorPrimary"
-                        app:cornerRadius="24dp"
+                        app:cornerRadius="26dp"
                         app:icon="@drawable/ic_add"
                         app:iconGravity="textStart" />
 
@@ -138,12 +181,12 @@
                         android:id="@+id/btnPause"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="56dp"
                         android:layout_marginTop="12dp"
                         android:enabled="false"
                         android:text="Pause"
                         android:textSize="16sp"
-                        app:cornerRadius="24dp"
+                        app:cornerRadius="26dp"
                         app:icon="@drawable/ic_close"
                         app:iconGravity="textStart" />
 
@@ -156,24 +199,24 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSave"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="56dp"
                             android:layout_marginEnd="8dp"
                             android:layout_weight="1"
                             android:enabled="false"
                             android:text="Save"
-                            app:cornerRadius="20dp"
+                            app:cornerRadius="22dp"
                             app:icon="@drawable/ic_save" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnDiscard"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="56dp"
                             android:layout_marginStart="8dp"
                             android:layout_weight="1"
                             android:enabled="false"
                             android:text="Discard"
-                            app:cornerRadius="20dp"
+                            app:cornerRadius="22dp"
                             app:icon="@drawable/ic_delete" />
                     </LinearLayout>
                 </LinearLayout>
