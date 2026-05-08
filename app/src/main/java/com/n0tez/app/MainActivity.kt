@@ -71,7 +71,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshPermissionState()
-        maybePromptRequiredSetup()
+        if (shouldStartFloatingWidgetAfterSetup) {
+            maybePromptRequiredSetup(forceNavigation = true)
+        }
     }
 
     private fun checkNotificationPermission() {
@@ -94,12 +96,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun hasAccessibilityPermission(): Boolean = TextCaptureAccessibilityService.isEnabled(this)
+    private fun hasAccessibilityPermission(): Boolean {
+        return try {
+            TextCaptureAccessibilityService.isEnabled(this)
+        } catch (error: Exception) {
+            Log.e("MainActivity", "Failed to resolve accessibility permission state", error)
+            false
+        }
+    }
 
     private fun hasRequiredWidgetPermissions(): Boolean = hasOverlayPermission() && hasAccessibilityPermission()
 
     private fun refreshPermissionState() {
-        overlayPermissionGranted = hasOverlayPermission()
+        overlayPermissionGranted = try {
+            hasOverlayPermission()
+        } catch (error: Exception) {
+            Log.e("MainActivity", "Failed to resolve overlay permission state", error)
+            false
+        }
         accessibilityPermissionGranted = hasAccessibilityPermission()
     }
 

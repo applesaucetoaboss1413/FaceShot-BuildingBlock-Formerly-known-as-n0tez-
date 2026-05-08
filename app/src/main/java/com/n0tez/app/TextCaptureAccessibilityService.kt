@@ -2,7 +2,11 @@ package com.n0tez.app
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+import android.content.Context
 import android.graphics.Rect
+import android.util.Log
+import android.view.accessibility.AccessibilityManager
 import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -102,15 +106,38 @@ class TextCaptureAccessibilityService : AccessibilityService() {
         @Volatile
         private var lastObservedPackageName: String? = null
 
-        fun isEnabled(context: android.content.Context): Boolean {
-            val enabled = Settings.Secure.getString(
-                context.contentResolver,
-                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-            ).orEmpty()
-            val expected = "${context.packageName}/${TextCaptureAccessibilityService::class.java.name}"
-            return enabled
-                .split(':')
-                .any { it.equals(expected, ignoreCase = true) }
+        fun isEnabled(context: Context): Boolean {
+            val expectedClassName = TextCaptureAccessibilityService::class.java.name
+
+            try {
+                val accessibilityManager =
+                    context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
+                val enabledServices =
+                    accessibilityManager?.getEnabledAccessibilityServiceList(FEEDBACK_ALL_MASK).orEmpty()
+                if (enabledServices.any { service ->
+                        service.resolveInfo?.serviceInfo?.packageName == context.packageName &&
+                            service.resolveInfo?.serviceInfo?.name == expectedClassName
+                    }
+                ) {
+                    return true
+                }
+            } catch (error: Exception) {
+                Log.w("TextCaptureAccessibility", "AccessibilityManager lookup failed", error)
+            }
+
+            return try {
+                val enabled = Settings.Secure.getString(
+                    context.contentResolver,
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                ).orEmpty()
+                val expected = "${context.packageName}/$expectedClassName"
+                enabled
+                    .split(':')
+                    .any { it.equals(expected, ignoreCase = true) }
+            } catch (error: Exception) {
+                Log.w("TextCaptureAccessibility", "Secure settings lookup failed", error)
+                false
+            }
         }
 
         fun captureTextInRegion(targetBounds: Rect, excludedPackageName: String): String {
