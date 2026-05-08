@@ -8,9 +8,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.list.LazyColumn
-import androidx.compose.foundation.lazy.list.item
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.item
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -180,7 +182,7 @@ class NotesListActivity : AppCompatActivity() {
                 }
                 item {
                     androidx.compose.foundation.layout.Row(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         MetricCard(
@@ -210,7 +212,7 @@ class NotesListActivity : AppCompatActivity() {
                             PrimaryButton(
                                 text = getString(R.string.new_note),
                                 onClick = { startActivity(Intent(this@NotesListActivity, NoteEditorActivity::class.java)) },
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier.fillMaxWidth(),
                             )
                             Text(
                                 text = "Workspace state: $latestUpdate",
