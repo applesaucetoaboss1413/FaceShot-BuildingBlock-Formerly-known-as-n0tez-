@@ -77,6 +77,43 @@ class NotesListActivity : AppCompatActivity() {
             }
         }
         loadNotes()
+        setContent {
+            N0tezTheme {
+                NotesListScreen(
+                    notes = notes,
+                    pendingDeleteNote = pendingDeleteNote,
+                    pendingShredNote = pendingShredNote,
+                    onBack = ::finish,
+                    onCreateNote = {
+                        startActivity(Intent(this, NoteEditorActivity::class.java))
+                    },
+                    onOpenNote = ::openNote,
+                    onPinNote = ::togglePin,
+                    onDeleteNote = {
+                        pendingDeleteNote = it
+                    },
+                    onShredNote = {
+                        pendingShredNote = it
+                    },
+                    onDismissDelete = {
+                        pendingDeleteNote = null
+                    },
+                    onDismissShred = {
+                        pendingShredNote = null
+                    },
+                    onConfirmDelete = {
+                        pendingDeleteNote?.let { noteRepository.deleteNote(it.id) }
+                        pendingDeleteNote = null
+                        loadNotes()
+                    },
+                    onConfirmShred = {
+                        pendingShredNote?.let { noteRepository.shredNote(it.id) }
+                        pendingShredNote = null
+                        loadNotes()
+                    }
+                )
+            }
+        }
     }
 
     override fun onResume() {
@@ -138,13 +175,14 @@ class NotesListActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        finish()
         return true
     }
 
     companion object {
         private const val REQUEST_PIN_VERIFICATION = 1001
     }
+}
 
     @Composable
     private fun NotesScreen() {
@@ -271,5 +309,30 @@ class NotesListActivity : AppCompatActivity() {
         val message: String,
         val confirmLabel: String,
         val onConfirm: () -> Unit,
+    )
+}
+
+@Composable
+private fun ConfirmDialog(
+    title: String,
+    message: String,
+    confirmLabel: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(confirmLabel)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
     )
 }
