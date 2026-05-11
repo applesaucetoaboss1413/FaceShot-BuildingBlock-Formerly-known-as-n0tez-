@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.item
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -77,43 +75,6 @@ class NotesListActivity : AppCompatActivity() {
             }
         }
         loadNotes()
-        setContent {
-            N0tezTheme {
-                NotesListScreen(
-                    notes = notes,
-                    pendingDeleteNote = pendingDeleteNote,
-                    pendingShredNote = pendingShredNote,
-                    onBack = ::finish,
-                    onCreateNote = {
-                        startActivity(Intent(this, NoteEditorActivity::class.java))
-                    },
-                    onOpenNote = ::openNote,
-                    onPinNote = ::togglePin,
-                    onDeleteNote = {
-                        pendingDeleteNote = it
-                    },
-                    onShredNote = {
-                        pendingShredNote = it
-                    },
-                    onDismissDelete = {
-                        pendingDeleteNote = null
-                    },
-                    onDismissShred = {
-                        pendingShredNote = null
-                    },
-                    onConfirmDelete = {
-                        pendingDeleteNote?.let { noteRepository.deleteNote(it.id) }
-                        pendingDeleteNote = null
-                        loadNotes()
-                    },
-                    onConfirmShred = {
-                        pendingShredNote?.let { noteRepository.shredNote(it.id) }
-                        pendingShredNote = null
-                        loadNotes()
-                    }
-                )
-            }
-        }
     }
 
     override fun onResume() {
@@ -182,7 +143,6 @@ class NotesListActivity : AppCompatActivity() {
     companion object {
         private const val REQUEST_PIN_VERIFICATION = 1001
     }
-}
 
     @Composable
     private fun NotesScreen() {

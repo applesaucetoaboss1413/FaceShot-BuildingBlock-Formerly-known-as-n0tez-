@@ -43,6 +43,7 @@ jobs:
       shell: bash
       env:
         KOTLIN_COMPILER_EXECUTION_STRATEGY: in-process
+        GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8"
       run: ./gradlew assembleDebug --no-daemon --stacktrace --info --warning-mode all
       
     - name: List Build Outputs
@@ -72,6 +73,7 @@ jobs:
         N0TEZ_KEY_ALIAS: n0tez
         N0TEZ_KEY_PASSWORD: android
         KOTLIN_COMPILER_EXECUTION_STRATEGY: in-process
+        GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8"
       run: ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace --info --warning-mode all
       
     - name: List Release Outputs

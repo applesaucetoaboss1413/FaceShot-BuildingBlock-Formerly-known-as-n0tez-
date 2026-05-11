@@ -163,7 +163,7 @@ class NoteEditorActivity : AppCompatActivity() {
             val start = editorValue.selection.start.coerceAtLeast(0)
             val end = editorValue.selection.end.coerceAtLeast(0)
             val replaced = editorValue.text.replaceRange(
-                start = minOf(start, end),
+                startIndex = minOf(start, end),
                 endIndex = maxOf(start, end),
                 replacement = pastedText,
             )
@@ -327,110 +327,6 @@ class NoteEditorActivity : AppCompatActivity() {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun NoteEditorScreen(
-    title: String,
-    noteValue: TextFieldValue,
-    transparency: Float,
-    onBack: () -> Unit,
-    onNoteChange: (TextFieldValue) -> Unit,
-    onTransparencyChange: (Float) -> Unit,
-    onSave: () -> Unit,
-    onShare: () -> Unit,
-    onCopy: () -> Unit,
-    onPaste: () -> Unit
-) {
-    val wordCount = noteValue.text.trim().split(Regex("\\s+")).filter { it.isNotBlank() }.size
-    val lineCount = noteValue.text.lines().size.coerceAtLeast(1)
-
-    AppScreen(
-        title = title,
-        subtitle = "Compose writing surface",
-        navigationIcon = Icons.AutoMirrored.Rounded.ArrowBack,
-        onNavigationClick = onBack
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                HeroPanel(
-                    eyebrow = "Editor",
-                    title = "A calmer writing surface with better spacing.",
-                    description = "The note editor now uses a clearer hierarchy, live metrics, and modern action controls without changing your save logic.",
-                    metrics = {
-                        MetricChip("Words", wordCount.toString(), Icons.Rounded.Edit)
-                        MetricChip("Lines", lineCount.toString(), Icons.Rounded.ContentCopy)
-                        MetricChip("Focus", "${transparency.toInt()}%", Icons.Rounded.ContentPaste)
-                    }
-                )
-            }
-            item {
-                GlassPanel {
-                    Text(
-                        text = "Canvas transparency",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Slider(
-                        value = transparency,
-                        onValueChange = onTransparencyChange,
-                        valueRange = 25f..100f
-                    )
-                    Text(
-                        text = "${transparency.toInt()}% visible",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            item {
-                GlassPanel {
-                    OutlinedTextField(
-                        value = noteValue,
-                        onValueChange = onNoteChange,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(360.dp),
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = transparency / 100f)
-                        ),
-                        placeholder = {
-                            Text("Write something clear, sharp, and worth saving.")
-                        }
-                    )
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(onClick = onSave) {
-                            Icon(Icons.Rounded.Save, contentDescription = null)
-                            Text(" Save")
-                        }
-                        FilledTonalButton(onClick = onShare) {
-                            Icon(Icons.Rounded.IosShare, contentDescription = null)
-                            Text(" Share")
-                        }
-                        FilledTonalButton(onClick = onCopy) {
-                            Icon(Icons.Rounded.ContentCopy, contentDescription = null)
-                            Text(" Copy")
-                        }
-                        FilledTonalButton(onClick = onPaste) {
-                            Icon(Icons.Rounded.ContentPaste, contentDescription = null)
-                            Text(" Paste")
-                        }
-                    }
-                }
             }
         }
     }
