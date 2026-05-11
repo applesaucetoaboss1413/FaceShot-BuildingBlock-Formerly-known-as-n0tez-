@@ -38,6 +38,30 @@
                 android:maxLines="1"
                 android:layout_weight="1"
                 android:paddingStart="4dp"/>
+            <LinearLayout
+                android:id="@+id/drag_handle_chip"
+                android:layout_width="78dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/handle_chip_background"
+                android:contentDescription="Drag here to move the floating notepad"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingHorizontal="6dp">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_drag_handle"
+                    app:tint="#ff00ffff"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="MOVE"
+                    android:textColor="#ff00ffff"
+                    android:textSize="10sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
             <ImageButton
                 android:id="@+id/btn_save_note"
                 android:background="@android:color/transparent"
@@ -122,6 +146,32 @@
                 android:imeOptions="actionNone"/>
         </FrameLayout>
         <LinearLayout
+            android:id="@+id/capture_permission_strip"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:background="#b80a1220"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
+            <TextView
+                android:id="@+id/capture_status_chip"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Text capture: optional"
+                android:textColor="#ffffb86c"
+                android:textSize="11sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tap text icon to enable"
+                android:textColor="#b3ffffff"
+                android:textSize="10sp"/>
+        </LinearLayout>
+        <LinearLayout
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:id="@+id/bottom_bar"
@@ -198,13 +248,14 @@
                 android:contentDescription="Shred note securely"/>
             <ImageButton
                 android:id="@+id/btn_resize"
-                android:background="@android:color/transparent"
+                android:background="@drawable/handle_chip_background"
                 android:padding="8dp"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:src="@drawable/ic_resize"
-                app:tint="#80ffffff"
-                android:contentDescription="Resize notepad"/>
+                app:tint="#ff00ffff"
+                android:alpha="0.92"
+                android:contentDescription="Drag this corner to resize the floating notepad"/>
         </LinearLayout>
     </LinearLayout>
     <View

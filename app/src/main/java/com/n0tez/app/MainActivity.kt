@@ -49,11 +49,9 @@ class MainActivity : AppCompatActivity() {
 
     private val overlayPermissionRequestCode = 100
     private val notificationPermissionRequestCode = 101
-    private val accessibilityPermissionRequestCode = 102
 
     private var shouldStartFloatingWidgetAfterSetup = false
     private var hasAutoNavigatedOverlayThisSession = false
-    private var hasAutoNavigatedAccessibilityThisSession = false
     private var overlayPermissionGranted by mutableStateOf(false)
     private var accessibilityPermissionGranted by mutableStateOf(false)
 
@@ -105,7 +103,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun hasRequiredWidgetPermissions(): Boolean = hasOverlayPermission() && hasAccessibilityPermission()
+    private fun hasRequiredWidgetPermissions(): Boolean = hasOverlayPermission()
 
     private fun refreshPermissionState() {
         overlayPermissionGranted = try {
@@ -126,11 +124,6 @@ class MainActivity : AppCompatActivity() {
                 openOverlayPermissionSettings()
             }
 
-            !hasAccessibilityPermission() && (forceNavigation || !hasAutoNavigatedAccessibilityThisSession) -> {
-                hasAutoNavigatedAccessibilityThisSession = true
-                openAccessibilityPermissionSettings()
-            }
-
             shouldStartFloatingWidgetAfterSetup -> {
                 shouldStartFloatingWidgetAfterSetup = false
                 startFloatingWidget()
@@ -141,9 +134,6 @@ class MainActivity : AppCompatActivity() {
     private fun resetPermissionNavigationState() {
         if (hasOverlayPermission()) {
             hasAutoNavigatedOverlayThisSession = false
-        }
-        if (hasAccessibilityPermission()) {
-            hasAutoNavigatedAccessibilityThisSession = false
         }
     }
 
@@ -161,23 +151,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun requestAccessibilityPermission() {
-        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-        if (intent.resolveActivity(packageManager) != null) {
-            startActivityForResult(intent, accessibilityPermissionRequestCode)
-        } else {
-            openAppDetailsSettings()
-        }
-    }
-
     private fun openOverlayPermissionSettings() {
         Toast.makeText(this, R.string.overlay_permission_dialog_message, Toast.LENGTH_LONG).show()
         requestOverlayPermission()
-    }
-
-    private fun openAccessibilityPermissionSettings() {
-        Toast.makeText(this, R.string.accessibility_permission_dialog_message, Toast.LENGTH_LONG).show()
-        requestAccessibilityPermission()
     }
 
     private fun openAppDetailsSettings() {
@@ -200,7 +176,12 @@ class MainActivity : AppCompatActivity() {
             } else {
                 startService(intent)
             }
-            Toast.makeText(this, R.string.widget_started, Toast.LENGTH_SHORT).show()
+            val startMessage = if (hasAccessibilityPermission()) {
+                getString(R.string.widget_started)
+            } else {
+                getString(R.string.widget_started_text_capture_optional)
+            }
+            Toast.makeText(this, startMessage, Toast.LENGTH_LONG).show()
         } catch (error: Exception) {
             Log.e("MainActivity", "Failed to start floating widget", error)
             Toast.makeText(
@@ -257,8 +238,12 @@ class MainActivity : AppCompatActivity() {
             Triple("Overlay ready", "Widget launch only needs setup completed once.", Icons.Outlined.Widgets),
         )
 
-        val permissionPrompt = if (overlayPermissionGranted && accessibilityPermissionGranted) {
-            getString(R.string.dashboard_permissions_ready)
+        val permissionPrompt = if (overlayPermissionGranted) {
+            if (accessibilityPermissionGranted) {
+                getString(R.string.dashboard_permissions_ready)
+            } else {
+                getString(R.string.dashboard_text_capture_optional)
+            }
         } else {
             getString(R.string.dashboard_permissions_missing)
         }
@@ -291,8 +276,8 @@ class MainActivity : AppCompatActivity() {
                     StatusPillRow(
                         statuses = listOf(
                             "Overlay Ready" to overlayPermissionGranted,
-                            "Text Capture Ready" to accessibilityPermissionGranted,
-                            "Launch Ready" to hasRequiredWidgetPermissions(),
+                            "Text Capture On" to accessibilityPermissionGranted,
+                            "Floating Note Ready" to hasRequiredWidgetPermissions(),
                         ),
                     )
                 }
@@ -355,16 +340,6 @@ class MainActivity : AppCompatActivity() {
                     maybePromptRequiredSetup(forceNavigation = true)
                 } else {
                     Toast.makeText(this, R.string.overlay_permission_required, Toast.LENGTH_SHORT).show()
-                    shouldStartFloatingWidgetAfterSetup = false
-                }
-            }
-
-            accessibilityPermissionRequestCode -> {
-                if (hasAccessibilityPermission()) {
-                    refreshPermissionState()
-                    maybePromptRequiredSetup(forceNavigation = true)
-                } else {
-                    Toast.makeText(this, R.string.accessibility_permission_denied, Toast.LENGTH_SHORT).show()
                     shouldStartFloatingWidgetAfterSetup = false
                 }
             }

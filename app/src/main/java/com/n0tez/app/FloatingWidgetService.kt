@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -12,7 +13,11 @@ import android.content.pm.ServiceInfo
 import android.graphics.Color
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Shader
 import android.graphics.PixelFormat
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
@@ -157,6 +162,9 @@ class FloatingWidgetService : Service() {
             }
 
             val bitmap = decodeOverlayIcon(R.drawable.ic_floating_bubble_original)
+            binding.bubbleContainer.clipToOutline = true
+            binding.bubbleIcon.clipToOutline = true
+            binding.bubbleIcon.elevation = dpToPx(10).toFloat()
             if (bitmap != null) {
                 binding.bubbleIcon.setImageBitmap(bitmap)
                 logInternal("bubble_icon_set:${bitmap.width}x${bitmap.height}")
@@ -437,8 +445,10 @@ class FloatingWidgetService : Service() {
             }
 
             btnCaptureText.setOnClickListener {
+                updateCapturePermissionState(binding)
                 captureVisibleTextIntoNote(notepadEditText)
             }
+            updateCapturePermissionState(binding)
 
             btnDeleteNote.setOnClickListener {
                 currentNote?.let { note ->
@@ -479,6 +489,7 @@ class FloatingWidgetService : Service() {
             }
 
             setupNotepadDrag(headerBar)
+            setupNotepadDrag(dragHandleChip)
             
             // Setup Resize
             btnResize?.let { setupResize(it) }
@@ -498,29 +509,85 @@ class FloatingWidgetService : Service() {
         btnPin.setColorFilter(if (isPinned) Color.parseColor("#FFD700") else Color.WHITE)
     }
 
+    private fun updateCapturePermissionState(binding: FloatingNotepadBinding) {
+        val captureReady = TextCaptureAccessibilityService.isEnabled(this)
+        binding.btnCaptureText.alpha = if (captureReady) 1.0f else 0.68f
+        binding.btnCaptureText.setColorFilter(
+            Color.parseColor(if (captureReady) "#FF00FFFF" else "#FFFFB86C"),
+        )
+        binding.captureStatusChip?.text = if (captureReady) {
+            getString(R.string.accessibility_capture_ready_chip)
+        } else {
+            getString(R.string.accessibility_capture_disabled_chip)
+        }
+        binding.captureStatusChip?.setTextColor(
+            Color.parseColor(if (captureReady) "#FF00FFFF" else "#FFFFB86C"),
+        )
+        binding.captureStatusChip?.contentDescription = if (captureReady) {
+            getString(R.string.accessibility_capture_ready_description)
+        } else {
+            getString(R.string.accessibility_capture_disabled_description)
+        }
+        binding.btnCaptureText.contentDescription = if (captureReady) {
+            getString(R.string.accessibility_capture_text_description)
+        } else {
+            getString(R.string.accessibility_capture_disabled_description)
+        }
+    }
+
     private fun setupNotepadDrag(dragView: View) {
         var initialX = 0
         var initialY = 0
         var initialTouchX = 0f
         var initialTouchY = 0f
+        var pendingX = 0
+        var pendingY = 0
+        var updateScheduled = false
+        var isDragging = false
+        val touchSlop = ViewConfiguration.get(this).scaledTouchSlop
 
-        dragView.setOnTouchListener { _, event ->
-            when (event.action) {
+        fun schedulePositionUpdate() {
+            if (updateScheduled) return
+            updateScheduled = true
+            mainHandler.post {
+                updateScheduled = false
+                notepadParams?.x = pendingX
+                notepadParams?.y = pendingY
+                try {
+                    windowManager?.updateViewLayout(floatingNotepadView, notepadParams)
+                } catch (e: Exception) {
+                    logInternal("error_update_layout_notepad", e)
+                }
+            }
+        }
+
+        dragView.setOnTouchListener { touchedView, event ->
+            when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     initialX = notepadParams?.x ?: 0
                     initialY = notepadParams?.y ?: 0
+                    pendingX = initialX
+                    pendingY = initialY
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
+                    isDragging = false
+                    touchedView.animate().scaleX(1.01f).scaleY(1.01f).alpha(0.96f).setDuration(90).start()
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    notepadParams?.x = initialX + (event.rawX - initialTouchX).toInt()
-                    notepadParams?.y = initialY + (event.rawY - initialTouchY).toInt()
-                    try {
-                        windowManager?.updateViewLayout(floatingNotepadView, notepadParams)
-                    } catch (e: Exception) {
-                        logInternal("error_update_layout_notepad", e)
+                    val deltaX = event.rawX - initialTouchX
+                    val deltaY = event.rawY - initialTouchY
+                    if (abs(deltaX) > touchSlop || abs(deltaY) > touchSlop) {
+                        isDragging = true
                     }
+                    pendingX = initialX + deltaX.toInt()
+                    pendingY = initialY + deltaY.toInt()
+                    schedulePositionUpdate()
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    touchedView.animate().scaleX(1.0f).scaleY(1.0f).alpha(1.0f).setDuration(120).start()
+                    if (!isDragging) touchedView.performClick()
                     true
                 }
                 else -> false
@@ -533,40 +600,56 @@ class FloatingWidgetService : Service() {
         var initialHeight = 0
         var initialTouchX = 0f
         var initialTouchY = 0f
+        var pendingWidth = 0
+        var pendingHeight = 0
+        var updateScheduled = false
         var resized = false
 
-        resizeButton.setOnTouchListener { _, event ->
-            when (event.action) {
+        fun scheduleSizeUpdate() {
+            if (updateScheduled) return
+            updateScheduled = true
+            mainHandler.post {
+                updateScheduled = false
+                notepadParams?.width = pendingWidth
+                notepadParams?.height = pendingHeight
+                try {
+                    windowManager?.updateViewLayout(floatingNotepadView, notepadParams)
+                } catch (e: Exception) {
+                    logInternal("error_update_layout_resize", e)
+                }
+            }
+        }
+
+        resizeButton.setOnTouchListener { touchedView, event ->
+            when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     initialWidth = currentNotepadWidthPx()
                     initialHeight = currentNotepadHeightPx()
+                    pendingWidth = initialWidth
+                    pendingHeight = initialHeight
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
                     resized = false
+                    touchedView.animate().scaleX(1.12f).scaleY(1.12f).alpha(1.0f).setDuration(90).start()
                     true
                 }
-                MotionEvent.ACTION_UP -> {
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    touchedView.animate().scaleX(1.0f).scaleY(1.0f).alpha(0.92f).setDuration(120).start()
                     if (resized) {
                         saveResizedNotepadDimensions()
+                    } else {
+                        touchedView.performClick()
                     }
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val deltaX = event.rawX - initialTouchX
                     val deltaY = event.rawY - initialTouchY
-                    
-                    val newWidth = (initialWidth + deltaX).toInt().coerceIn(dpToPx(200), dpToPx(800))
-                    val newHeight = (initialHeight + deltaY).toInt().coerceIn(dpToPx(200), dpToPx(1200))
 
-                    notepadParams?.width = newWidth
-                    notepadParams?.height = newHeight
+                    pendingWidth = (initialWidth + deltaX).toInt().coerceIn(dpToPx(220), dpToPx(820))
+                    pendingHeight = (initialHeight + deltaY).toInt().coerceIn(dpToPx(240), dpToPx(1200))
                     resized = true
-                    
-                    try {
-                        windowManager?.updateViewLayout(floatingNotepadView, notepadParams)
-                    } catch (e: Exception) {
-                        logInternal("error_update_layout_resize", e)
-                    }
+                    scheduleSizeUpdate()
                     true
                 }
                 else -> false
@@ -695,7 +778,7 @@ class FloatingWidgetService : Service() {
             openAccessibilitySettings()
             Toast.makeText(
                 this,
-                getString(R.string.accessibility_permission_required),
+                getString(R.string.accessibility_capture_optional_permission_required),
                 Toast.LENGTH_LONG,
             ).show()
             return
@@ -757,10 +840,29 @@ class FloatingWidgetService : Service() {
 
     private fun openAccessibilitySettings() {
         Toast.makeText(this, R.string.accessibility_enable_instructions, Toast.LENGTH_LONG).show()
-        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+        val componentName = ComponentName(this, TextCaptureAccessibilityService::class.java)
+        val directIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS").apply {
+                putExtra(
+                    "android.provider.extra.ACCESSIBILITY_SERVICE_COMPONENT_NAME",
+                    componentName.flattenToString(),
+                )
+                putExtra("component_name", componentName)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+        } else {
+            null
+        }
+        val fallbackIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        startActivity(intent)
+        val intentToOpen = directIntent?.takeIf { it.resolveActivity(packageManager) != null } ?: fallbackIntent
+        try {
+            startActivity(intentToOpen)
+        } catch (error: Exception) {
+            logInternal("accessibility_settings_open_failed", error)
+            Toast.makeText(this, R.string.permission_settings_unavailable, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun closeNotepadInternal() {
@@ -795,7 +897,7 @@ class FloatingWidgetService : Service() {
             if (bm.width != target || bm.height != target) {
                 bm = Bitmap.createScaledBitmap(bm, target, target, true)
             }
-            bm
+            createCircularBitmap(bm)
         } catch (e: OutOfMemoryError) {
             logInternal("oom_decode_icon", e)
             null
@@ -813,6 +915,24 @@ class FloatingWidgetService : Service() {
             sample *= 2
         }
         return sample.coerceAtLeast(1)
+    }
+
+    private fun createCircularBitmap(source: Bitmap): Bitmap {
+        val size = minOf(source.width, source.height)
+        val xOffset = (source.width - size) / 2
+        val yOffset = (source.height - size) / 2
+        val squared = Bitmap.createBitmap(source, xOffset, yOffset, size, size)
+        val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            shader = BitmapShader(squared, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        }
+        val radius = size / 2f
+        canvas.drawCircle(radius, radius, radius, paint)
+        if (squared != source && !squared.isRecycled) {
+            squared.recycle()
+        }
+        return output
     }
 
     private fun readAndLogIconMetadata() {

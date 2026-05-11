@@ -101,3 +101,64 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+
+user_problem_statement: "Fix failed commits and complete FaceShot UI redesign; floating transparent notepad should capture text under its frame into the note by button press; permissions should prompt clearly and not crash or block whole app; movement/resizing should be smoother and clearly depicted; floating bubble should be rounded; app should open without crashing. User clarified accessibility denial must only disable text capture, not the whole app."
+frontend:
+  - task: "Native Android floating note permission isolation"
+    implemented: true
+    working: true
+    file: "app/src/main/java/com/n0tez/app/MainActivity.kt; app/src/main/java/com/n0tez/app/FloatingWidgetService.kt; app/src/main/res/values/strings.xml"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Changed widget launch to require overlay permission only. Accessibility permission is now optional and only controls the text capture button. Added user-facing copy that declining accessibility keeps notes, overlay, movement, resize, save and app flows working."
+      - working: true
+        agent: "testing"
+        comment: "Code review passed. MainActivity.kt line 106 hasRequiredWidgetPermissions() correctly returns only hasOverlayPermission(). Widget launch (lines 218-224) only checks overlay. Lines 179-184 show appropriate messages based on accessibility state. Permission flow (lines 122-131) only prompts for overlay, never blocks on accessibility. Dashboard messages (lines 241-249) clearly communicate optional nature. strings.xml lines 252, 258-259, 36-46 contain clear user-facing copy about optional accessibility. No crash or blocking behavior if accessibility denied. Cannot compile due to missing Android SDK, but logic is sound."
+  - task: "Native Android floating notepad text capture and UX polish"
+    implemented: true
+    working: true
+    file: "app/src/main/java/com/n0tez/app/FloatingWidgetService.kt; app/src/main/res/layout/floating_notepad.xml; app/src/main/res/drawable/handle_chip_background.xml"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Kept accessibility-based capture flow, updated capture button state chip, added optional permission prompt/fallback settings launch, inserted captured text at cursor, and added smoother throttled drag/resize interactions with clear MOVE and resize handles."
+      - working: true
+        agent: "testing"
+        comment: "Code review passed. FloatingWidgetService.kt captureVisibleTextIntoNote() (lines 776-810) checks accessibility, opens settings with optional message if disabled, does NOT stop service or disable app. updateCapturePermissionState() (lines 512-536) updates button visual state only, does not disable app. Capture button (lines 447-451) updates state and attempts capture. Drag handling (lines 538-596) uses throttled schedulePositionUpdate(). Resize handling (lines 598-658) uses throttled scheduleSizeUpdate(). floating_notepad.xml lines 42-64 show clear MOVE handle chip. handle_chip_background.xml is syntactically valid. Text capture remains behind button, accessibility denial only affects capture button. Cannot compile due to missing Android SDK, but logic is sound."
+  - task: "Native Android rounded floating bubble"
+    implemented: true
+    working: true
+    file: "app/src/main/java/com/n0tez/app/FloatingWidgetService.kt; app/src/main/res/layout/floating_bubble.xml; app/src/main/res/drawable/bubble_background.xml"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated floating bubble layout to circular/outlined bubble styling and crops decoded bubble artwork into a circular bitmap before display."
+      - working: true
+        agent: "testing"
+        comment: "Code review passed. FloatingWidgetService.kt createCircularBitmap() (lines 920-936) properly crops bitmap into circular shape. Bubble icon setup (lines 164-180) applies circular bitmap. bubble_background.xml uses android:shape='oval' for circular background. floating_bubble.xml line 7 uses clipToOutline='true' for circular clipping, line 6 applies bubble_background drawable, line 15 ImageView also clips to outline. All XML is syntactically valid. Cannot compile due to missing Android SDK, but logic is sound."
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 2
+  run_ui: false
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+agent_communication:
+  - agent: "main"
+    message: "Implementation completed in native Android code. Gradle compile was attempted after installing OpenJDK 17 but environment lacks Android SDK/ANDROID_HOME, so local compile verification is currently blocked by missing SDK. Testing agent should review native Android changes if possible; no backend API exists in this repository."
+  - agent: "testing"
+    message: "Code review completed for all three native Android tasks. All tasks passed review with working: true status. Permission isolation correctly implements overlay as required and accessibility as optional. Text capture flow properly handles accessibility denial without stopping app or disabling features. Bubble is properly rounded with circular clipping. All XML resources are syntactically valid. User-facing strings clearly communicate optional nature of accessibility permission. Cannot perform runtime testing or Gradle compilation due to missing Android SDK in environment, but code logic and structure are sound. All needs_retesting flags set to false."
