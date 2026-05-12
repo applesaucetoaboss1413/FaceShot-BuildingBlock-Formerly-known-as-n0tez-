@@ -83,8 +83,8 @@ class AboutActivity : AppCompatActivity() {
                 item {
                     HeroCard(
                         eyebrow = "About",
-                        title = "A cleaner brand presentation that matches the upgraded product shell.",
-                        description = "This screen now looks like part of the same premium experience, with trust signals, version clarity, and cleaner external actions.",
+                        title = "FaceShot-BuildingBlock identity, privacy posture, and version details in one place.",
+                        description = "Review app details, product focus, and trusted external links without leaving the workspace.",
                     )
                 }
                 item {
