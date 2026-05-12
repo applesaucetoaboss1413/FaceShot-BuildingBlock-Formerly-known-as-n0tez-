@@ -3,7 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/notepad_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:minWidth="360dp"
+    android:minHeight="440dp">
     <LinearLayout
         android:orientation="vertical"
         android:id="@+id/notepad_container"
@@ -38,6 +40,30 @@
                 android:maxLines="1"
                 android:layout_weight="1"
                 android:paddingStart="4dp"/>
+            <LinearLayout
+                android:id="@+id/drag_handle_chip"
+                android:layout_width="78dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/handle_chip_background"
+                android:contentDescription="Drag here to move the floating notepad"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingHorizontal="6dp">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_drag_handle"
+                    app:tint="#ff00ffff"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:text="MOVE"
+                    android:textColor="#ff00ffff"
+                    android:textSize="10sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
             <ImageButton
                 android:id="@+id/btn_save_note"
                 android:background="@android:color/transparent"
@@ -122,6 +148,32 @@
                 android:imeOptions="actionNone"/>
         </FrameLayout>
         <LinearLayout
+            android:id="@+id/capture_permission_strip"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:background="#b80a1220"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
+            <TextView
+                android:id="@+id/capture_status_chip"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Frame OCR ready"
+                android:textColor="#ff00ffff"
+                android:textSize="11sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Screen consent appears only when needed"
+                android:textColor="#b3ffffff"
+                android:textSize="10sp"/>
+        </LinearLayout>
+        <LinearLayout
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:id="@+id/bottom_bar"
@@ -133,8 +185,9 @@
                 android:id="@+id/btn_select_note"
                 android:background="@android:color/transparent"
                 android:padding="8dp"
-                android:layout_width="40dp"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="1"
                 android:src="@drawable/ic_note"
                 app:tint="#ff00ffff"
                 android:contentDescription="Select saved note"/>
@@ -142,8 +195,9 @@
                 android:id="@+id/btn_new_note"
                 android:background="@android:color/transparent"
                 android:padding="8dp"
-                android:layout_width="40dp"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="1"
                 android:src="@drawable/ic_add"
                 app:tint="#ff00ffff"
                 android:contentDescription="New note"/>
@@ -151,8 +205,9 @@
                 android:id="@+id/btn_pin_note"
                 android:background="@android:color/transparent"
                 android:padding="8dp"
-                android:layout_width="40dp"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="1"
                 android:src="@drawable/ic_pin"
                 app:tint="#ffffff"
                 android:contentDescription="Pin note"/>
@@ -160,8 +215,9 @@
                 android:id="@+id/btn_share_note"
                 android:background="@android:color/transparent"
                 android:padding="8dp"
-                android:layout_width="40dp"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="1"
                 android:src="@drawable/ic_share"
                 app:tint="#ff00ffff"
                 android:contentDescription="Share note"/>
@@ -169,21 +225,19 @@
                 android:id="@+id/btn_capture_text"
                 android:background="@android:color/transparent"
                 android:padding="8dp"
-                android:layout_width="40dp"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="1"
                 android:src="@drawable/ic_text"
                 app:tint="#ff00ffff"
-                android:contentDescription="@string/accessibility_capture_text_description"/>
-            <View
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"/>
+                android:contentDescription="@string/screen_capture_text_description"/>
             <ImageButton
                 android:id="@+id/btn_delete_note"
                 android:background="@android:color/transparent"
                 android:padding="8dp"
-                android:layout_width="40dp"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="1"
                 android:src="@drawable/ic_delete"
                 app:tint="#ffff6b6b"
                 android:contentDescription="Delete note"/>
@@ -191,20 +245,23 @@
                 android:id="@+id/btn_shred_note"
                 android:background="@android:color/transparent"
                 android:padding="8dp"
-                android:layout_width="40dp"
+                android:layout_width="0dp"
                 android:layout_height="40dp"
+                android:layout_weight="1"
                 android:src="@drawable/ic_shred"
                 app:tint="#ffff4444"
                 android:contentDescription="Shred note securely"/>
             <ImageButton
                 android:id="@+id/btn_resize"
-                android:background="@android:color/transparent"
+                android:background="@drawable/handle_chip_background"
                 android:padding="8dp"
-                android:layout_width="40dp"
+                android:layout_width="48dp"
                 android:layout_height="40dp"
+                android:layout_weight="0"
                 android:src="@drawable/ic_resize"
-                app:tint="#80ffffff"
-                android:contentDescription="Resize notepad"/>
+                app:tint="#ff00ffff"
+                android:alpha="0.92"
+                android:contentDescription="Drag this corner to resize the floating notepad"/>
         </LinearLayout>
     </LinearLayout>
     <View

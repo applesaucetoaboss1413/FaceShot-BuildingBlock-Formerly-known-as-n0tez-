@@ -49,13 +49,11 @@ class MainActivity : AppCompatActivity() {
 
     private val overlayPermissionRequestCode = 100
     private val notificationPermissionRequestCode = 101
-    private val accessibilityPermissionRequestCode = 102
 
     private var shouldStartFloatingWidgetAfterSetup = false
     private var hasAutoNavigatedOverlayThisSession = false
-    private var hasAutoNavigatedAccessibilityThisSession = false
     private var overlayPermissionGranted by mutableStateOf(false)
-    private var accessibilityPermissionGranted by mutableStateOf(false)
+    private var screenCaptureAvailable by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,16 +94,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun hasAccessibilityPermission(): Boolean {
-        return try {
-            TextCaptureAccessibilityService.isEnabled(this)
-        } catch (error: Exception) {
-            Log.e("MainActivity", "Failed to resolve accessibility permission state", error)
-            false
-        }
-    }
-
-    private fun hasRequiredWidgetPermissions(): Boolean = hasOverlayPermission() && hasAccessibilityPermission()
+    private fun hasRequiredWidgetPermissions(): Boolean = hasOverlayPermission()
 
     private fun refreshPermissionState() {
         overlayPermissionGranted = try {
@@ -114,7 +103,7 @@ class MainActivity : AppCompatActivity() {
             Log.e("MainActivity", "Failed to resolve overlay permission state", error)
             false
         }
-        accessibilityPermissionGranted = hasAccessibilityPermission()
+        screenCaptureAvailable = true
     }
 
     private fun maybePromptRequiredSetup(forceNavigation: Boolean = false) {
@@ -124,11 +113,6 @@ class MainActivity : AppCompatActivity() {
             !hasOverlayPermission() && (forceNavigation || !hasAutoNavigatedOverlayThisSession) -> {
                 hasAutoNavigatedOverlayThisSession = true
                 openOverlayPermissionSettings()
-            }
-
-            !hasAccessibilityPermission() && (forceNavigation || !hasAutoNavigatedAccessibilityThisSession) -> {
-                hasAutoNavigatedAccessibilityThisSession = true
-                openAccessibilityPermissionSettings()
             }
 
             shouldStartFloatingWidgetAfterSetup -> {
@@ -141,9 +125,6 @@ class MainActivity : AppCompatActivity() {
     private fun resetPermissionNavigationState() {
         if (hasOverlayPermission()) {
             hasAutoNavigatedOverlayThisSession = false
-        }
-        if (hasAccessibilityPermission()) {
-            hasAutoNavigatedAccessibilityThisSession = false
         }
     }
 
@@ -161,23 +142,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun requestAccessibilityPermission() {
-        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-        if (intent.resolveActivity(packageManager) != null) {
-            startActivityForResult(intent, accessibilityPermissionRequestCode)
-        } else {
-            openAppDetailsSettings()
-        }
-    }
-
     private fun openOverlayPermissionSettings() {
         Toast.makeText(this, R.string.overlay_permission_dialog_message, Toast.LENGTH_LONG).show()
         requestOverlayPermission()
-    }
-
-    private fun openAccessibilityPermissionSettings() {
-        Toast.makeText(this, R.string.accessibility_permission_dialog_message, Toast.LENGTH_LONG).show()
-        requestAccessibilityPermission()
     }
 
     private fun openAppDetailsSettings() {
@@ -216,21 +183,21 @@ class MainActivity : AppCompatActivity() {
         val actions = listOf(
             DashboardAction(
                 title = "Notes Hub",
-                subtitle = "Capture, sort, and revisit secure notes with a cleaner command view.",
+                subtitle = "Private notes with fast search, pinning, and protected deletion.",
                 iconRes = R.drawable.ic_note,
                 accent = MaterialTheme.colorScheme.primary,
                 onClick = { startActivity(Intent(this, NotesListActivity::class.java)) },
             ),
             DashboardAction(
                 title = "Media Studio",
-                subtitle = "Launch photo, video, voice, and gallery tools from one premium shell.",
+                subtitle = "Photo, video, voice, and gallery tools in one focused studio.",
                 iconRes = R.drawable.ic_widget,
                 accent = MaterialTheme.colorScheme.secondary,
                 onClick = { startActivity(Intent(this, MultimediaActivity::class.java)) },
             ),
             DashboardAction(
                 title = "Floating Note",
-                subtitle = "Run the overlay workflow with text capture and instant note access.",
+                subtitle = "Open the floating notepad, use frame OCR, and save captured text instantly.",
                 iconRes = R.drawable.ic_add,
                 accent = MaterialTheme.colorScheme.tertiary,
                 onClick = {
@@ -252,12 +219,12 @@ class MainActivity : AppCompatActivity() {
         )
 
         val workflowRows = listOf(
-            Triple("Visual refresh", "Sharper cards, richer contrast, and clearer action hierarchy.", Icons.Outlined.AutoAwesome),
-            Triple("Secure by default", "PIN protection and privacy tools stay close to the surface.", Icons.Outlined.Security),
-            Triple("Overlay ready", "Widget launch only needs setup completed once.", Icons.Outlined.Widgets),
+            Triple("Notes", "Create, edit, and organize private notes from the main hub.", Icons.Outlined.AutoAwesome),
+            Triple("Privacy", "PIN protection and local-first controls remain easy to reach.", Icons.Outlined.Security),
+            Triple("Floating note", "Launch the overlay after granting Android overlay permission once.", Icons.Outlined.Widgets),
         )
 
-        val permissionPrompt = if (overlayPermissionGranted && accessibilityPermissionGranted) {
+        val permissionPrompt = if (overlayPermissionGranted) {
             getString(R.string.dashboard_permissions_ready)
         } else {
             getString(R.string.dashboard_permissions_missing)
@@ -283,16 +250,16 @@ class MainActivity : AppCompatActivity() {
                 item {
                     HeroCard(
                         eyebrow = "Command Center",
-                        title = "A polished creative workspace for notes, overlays, and media tools.",
-                        description = "The entire front-end now leans into a cleaner futuristic dashboard with stronger hierarchy, better spacing, and high-confidence actions.",
+                        title = "Private notes, floating capture, and media tools in one refined workspace.",
+                        description = "A clean production dashboard for launching the note overlay, managing secure notes, and moving through creative tools without clutter.",
                     )
                 }
                 item {
                     StatusPillRow(
                         statuses = listOf(
-                            "Overlay Ready" to overlayPermissionGranted,
-                            "Text Capture Ready" to accessibilityPermissionGranted,
-                            "Launch Ready" to hasRequiredWidgetPermissions(),
+                            "Overlay" to overlayPermissionGranted,
+                            "Frame OCR" to screenCaptureAvailable,
+                            "Floating Note" to hasRequiredWidgetPermissions(),
                         ),
                     )
                 }
@@ -330,7 +297,7 @@ class MainActivity : AppCompatActivity() {
                 item {
                     SectionHeader(
                         title = "Why It Feels Better",
-                        subtitle = "The refreshed shell makes the product look intentional, premium, and easier to trust.",
+                        subtitle = "A focused workspace for secure notes, floating capture, and creative tools.",
                     )
                 }
                 items(workflowRows) { (title, subtitle, icon) ->
@@ -355,16 +322,6 @@ class MainActivity : AppCompatActivity() {
                     maybePromptRequiredSetup(forceNavigation = true)
                 } else {
                     Toast.makeText(this, R.string.overlay_permission_required, Toast.LENGTH_SHORT).show()
-                    shouldStartFloatingWidgetAfterSetup = false
-                }
-            }
-
-            accessibilityPermissionRequestCode -> {
-                if (hasAccessibilityPermission()) {
-                    refreshPermissionState()
-                    maybePromptRequiredSetup(forceNavigation = true)
-                } else {
-                    Toast.makeText(this, R.string.accessibility_permission_denied, Toast.LENGTH_SHORT).show()
                     shouldStartFloatingWidgetAfterSetup = false
                 }
             }

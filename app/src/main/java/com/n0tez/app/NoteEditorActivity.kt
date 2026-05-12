@@ -163,7 +163,7 @@ class NoteEditorActivity : AppCompatActivity() {
             val start = editorValue.selection.start.coerceAtLeast(0)
             val end = editorValue.selection.end.coerceAtLeast(0)
             val replaced = editorValue.text.replaceRange(
-                start = minOf(start, end),
+                startIndex = minOf(start, end),
                 endIndex = maxOf(start, end),
                 replacement = pastedText,
             )
@@ -189,10 +189,10 @@ class NoteEditorActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        finish()
         return true
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         autoSaveJob?.cancel()

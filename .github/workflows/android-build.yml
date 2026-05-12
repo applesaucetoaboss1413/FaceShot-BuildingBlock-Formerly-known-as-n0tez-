@@ -25,6 +25,12 @@ jobs:
     - name: Set up Android SDK
       uses: android-actions/setup-android@v3
 
+    - name: Free CI disk and memory headroom
+      shell: bash
+      run: |
+        sudo rm -rf /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/share/dotnet /opt/ghc || true
+        sudo apt-get clean
+
     - name: Install Android 15 SDK
       shell: bash
       run: |
@@ -35,6 +41,9 @@ jobs:
         
     - name: Build Debug APK
       shell: bash
+      env:
+        KOTLIN_COMPILER_EXECUTION_STRATEGY: in-process
+        GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8"
       run: ./gradlew assembleDebug --no-daemon --stacktrace --info --warning-mode all
       
     - name: List Build Outputs
@@ -64,6 +73,7 @@ jobs:
         N0TEZ_KEY_ALIAS: n0tez
         N0TEZ_KEY_PASSWORD: android
         KOTLIN_COMPILER_EXECUTION_STRATEGY: in-process
+        GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8"
       run: ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace --info --warning-mode all
       
     - name: List Release Outputs

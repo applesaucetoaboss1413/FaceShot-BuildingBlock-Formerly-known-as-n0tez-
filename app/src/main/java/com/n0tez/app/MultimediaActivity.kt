@@ -109,8 +109,8 @@ class MultimediaActivity : AppCompatActivity() {
                 item {
                     HeroCard(
                         eyebrow = "Studio",
-                        title = "One visual shell for photo, video, voice, and gallery workflows.",
-                        description = "The media section now feels like a deliberate premium workspace instead of a list of disconnected entry points.",
+                        title = "Photo, video, voice, and gallery tools organized for fast creative work.",
+                        description = "Choose the tool you need and continue your edit without distractions.",
                     )
                 }
                 item {

@@ -30,6 +30,12 @@ plugins {
     id 'com.google.firebase.crashlytics'
 }
 
+// [FIX-5] Keep Kotlin runtime pinned to the same version as the root Kotlin Gradle plugin.
+// This avoids kapt stub generation loading mixed Kotlin runtime/compiler metadata versions in CI.
+ext {
+    kotlin_version = '1.9.22'
+}
+
 def isReleaseTask = gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
 
 android {
@@ -119,6 +125,16 @@ android {
     }
 }
 
+// Run Kotlin with the same JDK used by CI while keeping emitted Android bytecode at JVM 11.
+kotlin {
+    jvmToolchain(17)
+}
+
+kapt {
+    correctErrorTypes = true
+}
+
+
 // ---------------------------------------------------------------
 // Icon metadata generation — runs before every preBuild
 // [FIX-2] Use project-relative paths instead of hardcoded Windows path
@@ -186,6 +202,9 @@ tasks.named("preBuild").configure {
 // Dependencies
 // ---------------------------------------------------------------
 dependencies {
+    // [FIX-5] Pin Kotlin stdlib to match org.jetbrains.kotlin.android plugin 1.9.22.
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.activity:activity-compose:1.8.2'
@@ -218,6 +237,10 @@ dependencies {
     // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
+    // On-device OCR for user-approved screen text capture
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
+
+
     // Security
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
 
@@ -242,6 +265,8 @@ dependencies {
     testImplementation "androidx.test:core:1.5.0"
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation platform('androidx.compose:compose-bom:2024.02.02')
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
 
     // LeakCanary (debug only)
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.12'
